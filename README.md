@@ -1,8 +1,14 @@
 
-Le package ATLAS est une collection de fichiers utiles à la réalisation de graphiques destinés à l'analyse et la visualisualisation des sorties des différentes composantes du modèle couplé de l'IPSL. 
+This repository is a collection of useful files (scripts, palette files, configuration files, ...)  to help on producing plots to visualize and analyze output from the different componants of the Earth System Model (ESM) from Institut Pierre Simon Laplace (IPSL), France. 
 
-Pourquoi un autre package ATLAS ?
-La justification est de distinguer une bibliothèque d'outils et de scripts de bas niveaux (FAST) et leur utilisation (ATLAS).
-Ainsi, le package ATLAS est une utilisation de ce qui est proposé dans le package FAST dans le but de répondre à la mise en place de diagnostiques standards pour chacune des composantes du modèle couplé de l'IPSL (Atmosphère, Océan, Glace de Mer, Végétation, Chimie, ...).
+Why another repository "atlas" in addition to the "fast" repository (https://github.com/PBrockmann/fast) ?
 
-https://github.com/PBrockmann/fast
+The motivation is to differentiate the low level layer from fast repository and its use in the specific work of setting up standard diagnostics for each of the componants of the Coupled Model from IPSL (ESM).
+
+Different componants ot the IPSL-ESM: 
+ * the atmospheric model LMDZ. Refer: http://lmdz.lmd.jussieu.fr
+ * the NEMO ocean model, including sea ice (LIM) and marine biogeochemistry (PISCES). Refer: http://www.nemoocean.eu
+ * the ORCHIDEE model of continental surfaces including carbon cycle. Refer: http://orchidee.ipsl.jussieu.fr
+ * the INCA model of chemistry and aerosols. Refer: http://www-lsceinca.cea.fr
+
+More information from http://icmc.ipsl.fr/index.php/icmc-models
