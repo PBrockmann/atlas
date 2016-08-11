@@ -3,7 +3,7 @@ This repository is a collection of useful files (scripts, palette files, configu
 
 Why another repository "atlas" in addition to the "fast" repository (https://github.com/PBrockmann/fast) ?
 
-The motivation is to differentiate the low level layer from fast repository and its use in the specific work of setting up standard diagnostics for each of the componants of the Coupled Model from IPSL (ESM).
+The motivation is to differentiate the low level layer from "fast" repository from its use in the specific work of setting up standard diagnostics for each of the componants of the Coupled Model from IPSL (ESM).
 
 Different componants ot the IPSL-ESM are:
  * the atmospheric model LMDZ. (http://lmdz.lmd.jussieu.fr)
