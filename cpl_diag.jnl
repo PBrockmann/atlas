@@ -1,0 +1,129 @@
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@cea.fr
+! $Date: 2009/05/14 15:09:35 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.10 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+
+def sym title=$1
+def sym filetemplate=$2
+def sym model1=$3
+def sym variable1=$4
+def sym model2=$5
+def sym variable2=$6
+def sym qualifiers=$7%/lev=20%
+
+!----------------
+! cylindrical projection by default ; argument "ortho" is the other choice 
+if $8"false|ortho>true|*>false" then
+	def sym proj_cylin=0
+else
+	def sym proj_cylin=1
+endif
+
+!----------------
+! if model is not COARDS (metadata are stored in a grid file)
+! then a mask is applied using the mask variable
+if $3"false|COARDS>true|*>false" then         ! model1 --> variable1
+	def sym variable1_masked=0
+else
+	def sym variable1_masked=1
+endif
+
+if $5"false|COARDS>true|*>false" then         ! model2 --> variable2
+	def sym variable2_masked=0
+else
+	def sym variable2_masked=1
+endif
+
+!************************************************************
+
+! file1 -> atm_sst
+! file2 -> atm_tauflx
+! file3 -> oce_sst 
+! file4 -> oce_tau 
+! file5 -> oce_flx
+
+go symbol_replace_and_define file_atm_sst ($filetemplate) xxxxx atm_sst.nc
+go symbol_replace_and_define file_atm_tauflx ($filetemplate) xxxxx atm_tauflx.nc
+go symbol_replace_and_define file_oce_sst ($filetemplate) xxxxx oce_sst.nc
+go symbol_replace_and_define file_oce_tau ($filetemplate) xxxxx oce_tau.nc 
+go symbol_replace_and_define file_oce_flx ($filetemplate) xxxxx oce_flx.nc  
+
+use "($file_atm_sst)"
+use "($file_atm_tauflx)"
+use "($file_oce_sst)"
+use "($file_oce_tau)"
+use "($file_oce_flx)"
+
+!---------------------------
+
+go page_new -i 1 2 0 100 0 95
+
+!---------------------------
+set v 1 
+
+let var1_a=($variable1)
+def sym var1_title=($variable1)
+
+if `($variable1_masked) eq 1` then
+    let var1_b=if mask[d=($model1)_grid.nc,k=1] eq 1 then var1_a
+else
+    let var1_b=var1_a
+endif
+
+if `($proj_cylin) eq 1` then
+   go margins_set 20 10 10 10
+   go map_cylin2 ($model1) 0 var1_b /title=""($qualifiers) earth_continents  
+else
+   go map_ortho_2 ($model1) 0 90 var1_b 20 /title=""($qualifiers) earth_continents
+endif
+
+go text_put 5 88 "@AS($var1_title)" -1 0.25
+if `($variable1_masked) eq 1` then     ! map_xxx.jnl script cancel automatically model_grid.nc file
+    use "($model1)_grid.nc"
+endif
+go text_stat2_put 90 83 var1_b 1 0.2
+
+!---------------------------
+set v 2 
+
+let var2_a=($variable2)
+def sym var2_title=($variable2)
+
+if `($variable2_masked) eq 1` then
+    let var2_b=if mask[d=($model2)_grid.nc,k=1] eq 1 then var2_a
+else
+    let var2_b=var2_a
+endif
+
+if `($proj_cylin) eq 1` then
+   go margins_set 20 10 10 10
+   go map_cylin2 ($model2) 0 var2_b /title=""($qualifiers) earth_continents
+else
+   go map_ortho_2 ($model2) 0 90 var2_b 20 /title=""($qualifiers) earth_continents
+endif
+
+go text_put 5 88 "@AS($var2_title)" -1 0.25
+if `($variable2_masked) eq 1` then     ! map_xxx.jnl script cancel automatically model_grid.nc file
+    use "($model2)_grid.nc"
+endif
+go text_stat2_put 90 83 var2_b 1 0.2 
+
+!---------------------------
+go logo_put ipsl
+
+go textlayer_new
+go textlayer_text_put 5 95 "@AS($title)" -1 0.5
+go symbol_basename_and_define basefiletemplate "($filetemplate)"
+go textlayer_text_put 5 93 "@AS($basefiletemplate)" -1 0.3
+

@@ -1,0 +1,178 @@
+#!/bin/ksh
+#
+# Author: Patrick Brockmann
+# Contact: Patrick.Brockmann@cea.fr
+# $Date: 2009/05/14 15:09:35 $
+# $Name: ATLAS_608_1_5 $
+# $Revision: 1.1.1.1 $
+# History:
+# Modification:
+#
+#====================================
+#
+# card_analysis config.card run.card outputdir
+#
+# Notes: * called by monitoring01 script 
+#        * can be checked in standalone (create the outputdir first) 
+#
+#====================================
+function convertdatetoferretformat
+{
+# Convert date yyyy/mm/dd to dd-MMM-yyyy
+read date
+
+# Right justify and fill with leading zeros
+typeset -Z4 yyyy
+typeset -Z2 mm
+typeset -Z2 dd
+
+# parse the argument into $1, $2, $3
+set - $(IFS="-"; echo $date)
+
+yyyy=$1
+mm=$2
+dd=$3
+
+case $mm in
+   01) MMM="JAN";;
+   02) MMM="FEB";;
+   03) MMM="MAR";;
+   04) MMM="APR";;
+   05) MMM="MAY";;
+   06) MMM="JUN";;
+   07) MMM="JUL";;
+   08) MMM="AUG";;
+   09) MMM="SEP";;
+   10) MMM="OCT";;
+   11) MMM="NOV";;
+   12) MMM="DEC";;
+   *)  echo "card_analysis error: convertdatetoferretformat function has detected a month not in 01 ... 12"
+       return 1 ;;
+esac
+
+echo ${dd}-${MMM}-${yyyy}
+}
+
+#====================================
+configcard=$1
+runcard=$2
+outputdir=$3
+
+#====================================
+if ! [[ -f $configcard && -s $configcard && -f $runcard && -s $runcard ]] ; then
+	echo "card_analysis error: Files run.card or config.card are not accessible"
+	echo "                     Please verify that directory from option -c contents those files"
+	echo "Usage: card_analysis config.card run.card outputdir"
+	return 1
+fi
+
+#====================================
+cp $configcard $runcard $outputdir
+
+#====================================
+CalendarType=`awk '{ if ($0 ~ /^ *CalendarType *=/) {split($0,a,"=") ; gsub(/^ */, "", a[2]) ; print a[2]}}' ${configcard}`
+DateBegin=`awk '{ if ($0 ~ /^ *DateBegin *=/) {split($0,a,"=") ; gsub(/^ */, "", a[2]) ; print a[2]}}' ${configcard}`
+DateEnd=`awk '{ if ($0 ~ /^ *DateEnd *=/) {split($0,a,"=") ; gsub(/^ */, "", a[2]) ; print a[2]}}' ${configcard}`
+PeriodLength=`awk '{ if ($0 ~ /^ *PeriodLength *=/) {split($0,a,"=") ; gsub(/^ */, "", a[2]) ; print a[2]}}' ${configcard}`
+
+CumulPeriod=`awk '{ if ($0 ~ /^ *CumulPeriod *=/) {split($0,a,"=") ; gsub(/^ */, "", a[2]) ; print a[2]}}' ${runcard}`
+DateCurrent=`awk '{ if ($0 ~ /^ *PeriodDateEnd *=/) {split($0,a,"=") ; gsub(/^ */, "", a[2]) ; print a[2] }}' ${runcard}`
+
+#====================================
+sed -e "s#CTCTCT#$CalendarType#" \
+    -e "s#DBDBDB#$DateBegin#" \
+    -e "s#DEDEDE#$DateEnd#" \
+    -e "s#DCDCDC#$DateCurrent#" \
+    -e "s#PLPLPL#$PeriodLength#" \
+    -e "s#CPCPCP#$CumulPeriod#" \
+    $outputdir/index.html > $outputdir/index.html_$$ 
+mv $outputdir/index.html_$$ $outputdir/index.html
+
+#====================================
+# Not enough lines to produce analysis (not an error)
+if runcard_check.awk $runcard | grep -si "stop" > /dev/null ; then
+	return 0	
+fi
+
+#====================================
+# calendar names accepted by libIGCM are gregorian, noleap, 360d, leap
+# Calendar names accepted by ferret are gregorian, noleap, julian, 360_day, all_leap
+#
+# http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.4/cf-conventions.html#calendar
+# Clear Calendar names are gregorian, 365_day (noleap), 366_day (all_leap), 360_day
+#
+typeset -u CalendarType
+case $CalendarType in
+	"GREGORIAN") CalendarTypeFerret="gregorian";;
+	"NOLEAP")    CalendarTypeFerret="noleap";;
+	"360D")      CalendarTypeFerret="360_day";;
+	"LEAP")      CalendarTypeFerret="gregorian";;
+	             # Should be "all_leap"
+	*)           echo "card_analysis error: $CalendarType is a calendar type not accepted"
+                     return 1 ;;
+esac
+
+#====================================
+typeset -u PeriodLength
+case $PeriodLength in
+	*Y)        Delta=`echo $PeriodLength | cut -dY -f1`
+	           Units="Years";;
+	*M)        Delta=`echo $PeriodLength | cut -dM -f1`
+	           Units="Months";;
+	*D)        Delta=`echo $PeriodLength | cut -dD -f1`
+	           Units="Days";;
+	*)         echo "card_analysis error: PeriodLength has not been recognized"
+                   return 1 ;;
+esac
+
+#====================================
+# Create a ferret script to generate simulation calendar images
+# and append to end of script as comments RCPUMIN,RCPUMAX,UCPUMIN,UCPUMAX
+export LC_ALL=C                       # need by gawk to handle floating point format with .
+runcard_createsimucalendar.awk $runcard > createsimucalendar_$$.jnl
+
+#====================================
+# Get from createsimucalendar_$$.jnl informations (put as comments) 
+# that have been processed by runcard_createsimucalendar.awk
+RCPUMIN=`awk '{ if ($0 ~ /^! RCPUMIN =/) {split($0,a,"=") ; print a[2]}}' createsimucalendar_$$.jnl`
+RCPUMAX=`awk '{ if ($0 ~ /^! RCPUMAX =/) {split($0,a,"=") ; print a[2]}}' createsimucalendar_$$.jnl`
+RCPUAVE=`awk '{ if ($0 ~ /^! RCPUAVE =/) {split($0,a,"=") ; print a[2]}}' createsimucalendar_$$.jnl`
+UCPUMIN=`awk '{ if ($0 ~ /^! UCPUMIN =/) {split($0,a,"=") ; print a[2]}}' createsimucalendar_$$.jnl`
+UCPUMAX=`awk '{ if ($0 ~ /^! UCPUMAX =/) {split($0,a,"=") ; print a[2]}}' createsimucalendar_$$.jnl`
+UCPUAVE=`awk '{ if ($0 ~ /^! UCPUAVE =/) {split($0,a,"=") ; print a[2]}}' createsimucalendar_$$.jnl`
+sed -e "s#RCPUMIN#$RCPUMIN#" \
+    -e "s#RCPUMAX#$RCPUMAX#" \
+    -e "s#RCPUAVE#$RCPUAVE#" \
+    -e "s#UCPUMIN#$UCPUMIN#" \
+    -e "s#UCPUMAX#$UCPUMAX#" \
+    -e "s#UCPUAVE#$UCPUAVE#" \
+    $outputdir/index.html > $outputdir/index.html_$$
+mv $outputdir/index.html_$$ $outputdir/index.html
+
+#====================================
+# Create figure_01.gif
+DateBeginFerret=`echo $DateBegin | convertdatetoferretformat`
+DateEndFerret=`echo $DateEnd | convertdatetoferretformat`
+ferret -gif -script createsimucalendar_$$.jnl createsimucalendar_$$.tmp $CalendarTypeFerret $Delta $Units $DateBeginFerret $DateEndFerret figure_01.gif > /dev/null 2>&1
+
+# Create figure_02.gif
+DateCurrentFerret=`echo $DateCurrent | convertdatetoferretformat`
+ferret -gif -script createsimuprogress.jnl $CalendarTypeFerret $Delta $Units $DateBeginFerret $DateEndFerret $DateCurrentFerret figure_02.gif > /dev/null 2>&1
+
+#====================================
+ImageName=progress_`printf "%06d" $CumulPeriod`.png
+convert -append figure_01.gif figure_02.gif $ImageName
+cp -f $ImageName progress.png
+convert -geometry 40%x40% progress.png progress.jpg 2>/dev/null
+mv progress* $outputdir/progress
+
+#====================================
+# Clean up
+rm -rf figure_01.gif figure_02.gif
+rm -rf createsimucalendar_$$.jnl createsimucalendar_$$.tmp
+
+#====================================
+runcard_maketable.awk $runcard > ${outputdir}/run.card.html
+
+#====================================
+return 0

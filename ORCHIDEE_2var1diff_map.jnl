@@ -1,0 +1,75 @@
+!**************************************************************
+! Author: Patrick Brockmann, Rachid Benshila
+! Contact: rbipsl@ipsl.jussieu.fr
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+def sym title=$1
+def sym file1=$2
+def sym variable1=$3
+def sym file2=$4
+def sym variable2=$5
+def sym var_aux=$6
+def sym qualifiers=/nolab/pal=grads/title=""$7% %
+def sym qualifiersdiff=/nolab/pal=grads/title=""$8% %
+
+def sym polygonfile1=$9%earth_continents%
+def sym polygonfile2=$10%earth_continents%
+def sym polygonfilediff=earth_continents
+
+! To get a plot from 0 to 450 (so with modulo) 
+! Possible if in the netCDF file
+!       - the attribut modulo is present
+!       - or positive values for longitude
+def sym viewlimits=[x=0:450,y=-90:90]
+
+!************************************************************
+let variable1=($variable1)*($var_aux)
+let variable1_view=variable1($viewlimits)
+go symbol_basename_and_define basefile1 "($file1)"
+let variable2=($variable2)*($var_aux)
+let variable2_view=variable2($viewlimits)
+go symbol_basename_and_define basefile2 "($file2)"
+
+def sym method=fill  
+
+go page_new -i 1 3 0 100 0 90 
+
+set v 1 
+use "($file1)"
+go margins_set 20 20 20 20
+($method)($qualifiers) variable1_view[k=@sum]
+go cont_cylin 0 /over/nolab " " ($polygonfile1)
+go text_put 5 90 "@AS($basefile1): ($variable1)*($var_aux)" -1 0.35
+go text_stat2_put 50 5 variable1 0 
+
+def grid/x=variable1/y=variable1 gridvar1
+
+set v 2 
+use "($file2)"
+go margins_set 20 20 20 20
+($method)($qualifiers) variable2_view[k=@sum]
+go cont_cylin 0 /over/nolab " " ($polygonfile2)
+go symbol_basename_and_define basefile2 "($file2)"
+go text_put 5 90 "@AS($basefile2): ($variable2)*($var_aux)" -1 0.35
+go text_stat2_put 50 5 variable2 0 
+
+set v 3 
+let variable2_regridded=variable2[g=gridvar1]
+let diff=variable1[d=($basefile1),k=@sum]-variable2_regridded[k=@sum]
+let diff_view=diff($viewlimits)
+go margins_set 20 20 20 20
+($method)($qualifiersdiff) diff_view
+go cont_cylin 0 /over/nolab " " ($polygonfilediff)
+go text_put 5 90 "@ASDifference: ($variable1) - ($variable2)" -1 0.35
+go text_stat2_put 50 5 diff 0 
+
+go logo_put ipsl
+
+go textlayer_new
+go textlayer_text_put 5 95 "@AS($title)" -1 0.5
+
+

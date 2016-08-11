@@ -1,0 +1,92 @@
+\cancel mode verify
+
+!**************************************************************
+! Description:
+!
+! Usage:
+!
+! Example: go compute_extrema_series LJ22_1m_19520101_19800230_TSOL.nc TSOL[i=@ave,j=@ave]
+!
+! Notes: * Extrema are found considering successive boxes of 12 timesteps. 
+!        * An offset is proposed as argument (default=3)
+!          Example where an offset should be used:
+!
+! 01: 285.936 -
+! 02: 286.336  |
+! 03: 286.892  |
+! 04: 287.840  |                                                   -
+! 05: 288.722  |                                                    |
+! 06: 289.562  |                                                    |
+! 07: 289.873  |                                                    |
+! 08: 289.613  |                                                    |
+! 09: 288.770  |                                                    | 
+! 10: 287.746  |                                                    | 
+! 11: 286.676  |                                                    |
+! 12: 285.863 -    <-- minimun found for 01:12 period with offset=0 | <-- minimun found for 01:12 period with offset=3 
+! 13: 285.871 -    <-- minimum found for 13:24 period with offset=0 |
+! 14: 286.192  |                                                    |
+! 15: 287.091  |                                                    |  
+! 16: 287.893  |                                                   -
+! 17: 288.628  |
+! 18: 289.445  |
+! 19: 289.780  |
+! 20: 289.552  |
+! 21: 288.827  |
+! 22: 287.646  |
+! 23: 286.756  |
+! 24: 286.231 -
+!
+! Calls:
+!
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:35 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+def sym ME_file=$1
+let ME_var=$2
+
+! offset to find extrema from April to April
+def sym ME_offset=$3%3%
+
+!*************************************************
+use "($ME_file)"
+
+def sym ME_var_lend=`ME_var,return=lend`
+def sym ME_var_nb_year=`int((($ME_var_lend)-($ME_offset))/12)`
+
+def sym ME_file_dset=`ME_var,return=dset`
+def sym ME_minmax_file=minmax_($ME_file_dset).nc
+
+let ME_var_min=ME_var[l=@min] 
+let ME_var_max=ME_var[l=@max]
+let ME_var_min_diff=ME_var-ME_var_min
+let ME_var_max_diff=ME_var-ME_var_max
+let var_min_selected=if ME_var_min_diff eq 0 then ME_var_min
+set variable/title="Minimum"/units=" " var_min_selected
+let var_max_selected=if ME_var_max_diff eq 0 then ME_var_max
+set variable/title="Maximum"/units=" " var_max_selected
+
+sp rm -f ($ME_minmax_file)
+repeat/l=`1+($ME_offset)`:`12*($ME_var_nb_year)-($ME_offset)`:12 ( \
+	set region/l=`l`:`l+11` ; \
+	save/quiet/file=($ME_minmax_file)/append var_min_selected, var_max_selected )
+
+! Comments to add in the repeat loop if needed
+	!say "********************" ; \
+	!list/nohead ME_var, ME_var_min_diff, var_min_selected, ME_var_max_diff, var_max_selected ; \
+
+!**************************************************************
+cancel data/all
+cancel sym ME_*
+cancel var var_min_selected, var_max_selected
+cancel var ME_*
+
+!**************************************************************
+set mode/last verify
+

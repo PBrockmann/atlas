@@ -1,0 +1,145 @@
+\cancel mode verify
+
+!**************************************************************
+! Description: 
+!
+! Usage: orca_map.jnl MODEL 2DVAR [SHADE or CONTOUR command + qualifiers] [subsampling=1] [HLIM VLIM limits]
+!
+! Examples:
+!     yes? go orca_map.jnl ORCA2.0 sosstsst[l=1]
+!     yes? go orca_map.jnl ORCA2.0 sosstsst[l=1] shade/lev=25
+!     yes? go orca_map.jnl ORCA2.0 sosstsst[l=1] fill/lev=(-5,20,1)(20,40,2) 
+!     yes? go orca_map.jnl ORCA2.0 sosstsst[l=1] contour/fill/line/color=1/lev=20
+!     yes? go orca_map.jnl ORCA0.5 sosstsst[l=1] shade/lev=25 5
+! 
+!     ! Plot from -180 to 180 
+!     yes? go orca_map.jnl ORCA2.0 sosstsst[l=1] fill/lev=20/line/color=1/grat=dash 1 /hlim=180:`180+360` 
+!     ! Plot from 0 to 360
+!     yes? go orca_map.jnl ORCA2.0 sosstsst[l=1] fill/lev=20/line/color=1/grat=dash 1 /hlim=360:`360+360` 
+!     ! Plot from 0 to 420
+!     yes? go orca_map.jnl ORCA2.0 sosstsst[l=1] fill/lev=20/line/color=1/grat=dash 1 /hlim=360:`360+450` 
+!
+! Limitations:
+!     ! Contour lines are possible only from 0 to 420
+!     yes? go orca_map.jnl ORCA2.0 sosstsst[l=1] fill/lev=20/line/color=1/grat=dash 1 /hlim=-360:`360+450`
+!
+! Notes: Added a subsampling for high resolution ie ORCA0.5
+!
+! Calls: 
+!
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:35 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.5 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+DEFINE SYMBOL ME_GRID=$1
+DEFINE SYMBOL ME_VAR=$2
+DEFINE SYMBOL ME_HVLIMITS=$5%/HLIM=90:450:30/VLIM=-90:90:30%
+DEFINE SYMBOL ME_CMDQUALIFIERS=$3%shade($ME_HVLIMITS)%($ME_HVLIMITS)
+DEFINE SYMBOL ME_SUB=$4%1%
+
+ppl set ME_CMD1 $edit(ME_CMDQUALIFIERS,upcase)
+ppl set ME_ISSHADE $locate("SHADE",ME_CMD1)
+ppl set ME_ISFILL $locate("FILL",ME_CMD1)
+ppl set ME_ISOVER $locate("OVER",ME_CMD1)
+if `($ME_ISOVER) gt 0` then
+	def sym ME_OVER=/over
+else
+	ppl set ME_OVER
+endif
+
+!**************************************************************
+set data/save
+use "($ME_GRID)_grid.nc"
+
+set data/restore
+
+!**************************************************************
+if ($ME_GRID%|ORCA2.0>true|ORCA2.0_LGM>true|ORCA1.9>true|*>false%) then
+!------------------------
+	($ME_CMDQUALIFIERS)/j=2:148/set_up  ($ME_VAR),lon[d=($ME_GRID)_grid.nc]-360,lat[d=($ME_GRID)_grid.nc]
+	ppl xfor (I7,''LONE'')          ! set longitude axis labels
+	ppl yfor (I7,''LAT'')           ! set latitude axis labels
+	ppl xlab "LONGITUDE"
+	ppl ylab "LATITUDE"
+	if `($ME_ISSHADE) gt 0` then
+		ppl shade($ME_OVER)
+	else
+		ppl fill($ME_OVER)
+	endif
+	ppl shaset protect 
+
+	($ME_CMDQUALIFIERS)/j=2:148/NOLAB/LEV/OVER ($ME_VAR),lon[d=($ME_GRID)_grid.nc],lat[d=($ME_GRID)_grid.nc]
+	ppl shaset protect
+
+	($ME_CMDQUALIFIERS)/j=2:148/NOLAB/LEV/OVER ($ME_VAR),lon[d=($ME_GRID)_grid.nc]+360,lat[d=($ME_GRID)_grid.nc]
+
+elif ($ME_GRID%|ORCA4.0>true|ORCA4.0_LGM>true|*>false%) then
+!------------------------
+	($ME_CMDQUALIFIERS)/j=2:75/set_up ($ME_VAR),lon[d=($ME_GRID)_grid.nc]-360,lat[d=($ME_GRID)_grid.nc] 
+	ppl xfor (I7,''LONE'')          ! set longitude axis labels
+	ppl yfor (I7,''LAT'')           ! set latitude axis labels
+	ppl xlab "LONGITUDE"
+	ppl ylab "LATITUDE"
+	if `($ME_ISSHADE) gt 0` then
+		ppl shade($ME_OVER)
+	else
+		ppl fill($ME_OVER)
+	endif
+	ppl shaset protect
+
+	($ME_CMDQUALIFIERS)/j=2:75/NOLAB/LEV/OVER ($ME_VAR),lon[d=($ME_GRID)_grid.nc],lat[d=($ME_GRID)_grid.nc]
+	ppl shaset protect
+
+	($ME_CMDQUALIFIERS)/j=2:75/NOLAB/LEV/OVER ($ME_VAR),lon[d=($ME_GRID)_grid.nc]+360,lat[d=($ME_GRID)_grid.nc]
+
+elif ($ME_GRID%|ORCA0.5>true|ORCA0.5_LGM>true|*>false%) then
+!------------------------
+	let ME_VAR0=($ME_VAR)
+	let ME_LON0=lon[d=($ME_GRID)_grid.nc]
+	set variable/title=LONGITUDE ME_LON0
+	let ME_LON1=lon[d=($ME_GRID)_grid.nc]+360
+	set variable/title=LONGITUDE ME_LON1
+	let ME_LAT0=lat[d=($ME_GRID)_grid.nc]
+	set variable/title=LATITUDE ME_LAT0
+
+	if `($ME_SUB) ne 1` then
+		def sym ME_SUB1=i=1:722:($ME_SUB),j=1:511:($ME_SUB)
+	else
+		def sym ME_SUB1=i=1:722,j=1:511
+	endif
+	def sym ME_SUB2=i=1:200:($ME_SUB)
+
+	($ME_CMDQUALIFIERS)/set_up ME_VAR0[($ME_SUB1)],ME_LON0[($ME_SUB1)],ME_LAT0[($ME_SUB1)]
+	ppl xfor (I7,''LONE'')          ! set longitude axis labels
+	ppl yfor (I7,''LAT'')           ! set latitude axis labels
+	ppl xlab "LONGITUDE"
+	ppl ylab "LATITUDE"
+	if `($ME_ISSHADE) gt 0` then
+		ppl shade($ME_OVER)
+	else
+		ppl fill($ME_OVER)
+	endif
+	ppl shaset protect
+
+	($ME_CMDQUALIFIERS)/NOLAB/LEV/OVER ME_VAR0[($ME_SUB2)],ME_LON1[($ME_SUB2)],ME_LAT0[($ME_SUB2)]
+
+endif
+!------------------------
+
+!**************************************************************
+cancel data ($ME_GRID)_grid.nc
+set data/restore
+
+!**************************************************************
+cancel variable ME_*
+cancel symbol ME_*
+
+!**************************************************************
+set mode/last verify
+

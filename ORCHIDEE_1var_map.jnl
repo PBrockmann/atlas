@@ -1,0 +1,52 @@
+!**************************************************************
+! Author: Patrick Brockmann, Rachid Benshila
+! Contact: rbipsl@ipsl.jussieu.fr
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+def sym title=$1
+def sym file1=$2
+def sym variable1=$3
+def sym var_aux=$4
+def sym qualifiers=/nolab/pal=grads/title=""$5% %
+
+def sym polygonfile1=$6%earth_continents%
+def sym polygonfile2=$7%earth_continents%
+def sym polygonfilediff=earth_continents
+
+! To get a plot from 0 to 450 (so with modulo) 
+! Possible if in the netCDF file
+!       - the attribut modulo is present
+!       - or positive values for longitude
+def sym viewlimits=[x=0:450,y=-90:90]
+
+!************************************************************
+let variable1=($variable1)*($var_aux)
+let variable1_view=variable1($viewlimits)
+go symbol_basename_and_define basefile1 "($file1)"
+
+def sym method=fill  
+
+go page_new -li 1 1  
+
+set v 1 
+use "($file1)"
+go margins_set 20 10 10 10
+($method)($qualifiers) variable1_view[k=@sum]
+go cont_cylin 0 /over/nolab " " ($polygonfile1)
+
+go text_put 5 90 "@AS($basefile1): ($variable1)*($var_aux)" -1 0.35
+go text_stat2_put 5 85 variable1 -1 0.3 
+
+go logo_put ipsl
+
+go textlayer_new
+go textlayer_text_put 5 95 "@AS($title)" -1 0.5
+
+
+
+
+

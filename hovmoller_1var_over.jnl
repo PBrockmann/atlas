@@ -1,0 +1,68 @@
+!**************************************************************
+! Author: Patrick Brockmann, Rachid Benshila
+! Contact: rbipsl@ipsl.jussieu.fr
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+def sym title=$1
+def sym file1=$2
+def sym variable1=$3
+def sym varover1=$4
+def sym qualifiers=/nolab/pal=grads/title=""$5% %
+def sym qualifiersover=/nolab/pal=grads/title=""$6% %
+def sym limits=$7%XXXXX%
+def sym method=$8%fill%
+
+def sym polygonfile1=earth_continents
+def sym polygonfile2=earth_continents
+def sym polygonfilediff=earth_continents
+
+!------------------------
+! calclimits is used to bypass the fact that
+! ferret will not computed the same result for complete domain
+! in expressions var[x=@ave,y=@ave] and var[x=0:450@ave,y=-90:90@ave]
+! Note that yes? list var[x=20:60@ave,y=30:60@ave] and 
+!           yes? let var1=var[x=20:60,y=30:60]; list var1[x=@ave,y=@ave]
+! will not give the same result because the 2nd expression use for weight 
+! all the complete surface cells. On the contrary, the 1st expression compute
+! a weight considering cell splitting. 
+!------------------------
+if ($limits%|XXXXX>true|*>false|%) then
+        def sym viewlimits=[x=0:450,y=-90:90]
+        ppl set calclimits
+else
+        def sym viewlimits=($limits)
+        def sym calclimits=($limits)
+endif
+!------------------------
+
+!************************************************************
+def axis/T="1-jan-0000:00:00":"31-dec-0000:23:30"/np=12 my_taxis
+
+let variable1=($variable1)
+let variable1_view=variable1($viewlimits)
+let variable1_calc=variable1_view[gt=my_taxis@asn,i=@ave]
+let varover1=($varover1)
+let varover1_view=varover1($viewlimits)
+let varover1_calc=varover1_view[gt=my_taxis@asn,i=@ave]
+go symbol_basename_and_define basefile1 "($file1)"
+
+def sym methodover=contour/over  
+
+go page_new -li 1 1 
+
+set v 1 
+use "($file1)"
+go margins_set 20 10 10 10
+($method)($qualifiers) variable1_calc
+($methodover)($qualifiersover) varover1_calc
+go text_put 5 90 "@AS($basefile1): ($variable1) & ($varover1), ($viewlimits)" -1 0.35
+
+go logo_put ipsl
+
+go textlayer_new
+go textlayer_text_put 5 95 "@AS($title)" -1 0.5
+

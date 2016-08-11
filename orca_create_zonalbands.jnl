@@ -1,0 +1,55 @@
+!\cancel mode verify
+
+!**************************************************************
+! Description:
+!
+! Usage:
+!
+! Example:
+!
+! Notes:
+!
+! Calls:
+!
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:35 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.5 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+use "ORCA2.0_grid.nc"
+
+def sym ME_zonal_width=$1%5%
+def sym ME_zonal_nb=`180/($ME_zonal_width)`
+
+let ME_lat0=if mask eq 1 then lat
+let ME_lat1=ME_lat0[d=ORCA2.0_grid.nc]
+
+let ME_a0=(-1E34)
+repeat/range=1:($ME_zonal_nb)/name=n ( \
+	let ME_a`n`= if (ME_lat1 gt `(n-1)*($ME_zonal_width)-90` and ME_lat1 le `n*($ME_zonal_width)-90`) then `n` else ME_a`n-1` )
+
+let zonalbands=ME_a($ME_zonal_nb)
+set variable/title="Zonal bands (`($ME_zonal_width),zw=2` degrees)" zonalbands
+
+def sym ME_filename=ORCA2.0_zonalbands_`($ME_zonal_width),zw=2`.nc
+save/clobber/file=($ME_filename) zonalbands
+
+cancel data ORCA2.0_grid.nc
+cancel var zonalbands
+cancel var ME_*
+cancel symb ME_*
+
+!**************************************************************
+set mode/last verify
+
+! set memory/size=40
+! go orca_create_zonalbands.jnl 5
+! use ORCA2.0_zonalbands_05.nc
+! go map_cylin ORCA2.0 0  ZONALBANDS 20 /pal=rainbow_by_levels/lev=1D
+
+

@@ -1,0 +1,61 @@
+\cancel mode verify
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:34 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification:
+!
+! Example:
+! yes? go 1variable_mapisocylinmapisoortho2.jnl output_cpl/LJ10_SE_1789_1798_grid_T.nc  ORCA2.0 sosstsst[l=2] fill/lev=25/nolab
+! yes? go 1variable_mapisocylinmapisoortho2.jnl output_cpl/LJ10_SE_1789_1798_grid_T.nc  ORCA2.0 sosstsst[l=2] contour/fill/lev=20/nolab/line=1/color=1/pal=grads 
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+
+def sym file=$1
+def sym model=$2
+def sym variable1=$3
+def sym cmdqualifiers=$4%fill/nolab/title=""/nokey/pal=grads%
+def sym polygonfile1=$5%earth_continents%
+def sym polygonfile2=$6%graticule_30s%
+
+!************************************************************
+let variable1=($variable1)
+
+use "($file)"
+go symbol_basename_and_define basefile "($file)"
+
+go page_new -i 1 2 0 100 0 90
+
+set v 1
+go margins_set 20 20 10 10
+def sym CM=0 ! central meridien to set accordingly with zoom area
+go orca_map ($model) variable1 ($cmdqualifiers)/grat=(dash,color=black) 
+go cont_cylin 0 /over/nolab ($polygonfile) 
+
+set v 2 
+go mapiso_ortho_2 ($model) 0 90 variable1 10 ($cmdqualifiers) ($polygonfile1) ($polygonfile2)
+
+define view/xlim=0,1/ylim=0.45,0.5 colorbar
+set v colorbar
+go colorbar_put -h 10 90 10 50 0.4 ($qualifiers)
+
+go logo_put ipsl
+
+go textlayer_new
+go textlayer_text_put 5 98 "@AS($basefile)" -1 0.35
+go textlayer_text_put 5 95 "@AS($variable1)" -1 0.35
+go textlayer_statw_put 10 90 variable1[d=($basefile)] ($model) -1 0.3
+
+!**************************************************************
+set mode/last verify
+
+!**************************************************************
+exit

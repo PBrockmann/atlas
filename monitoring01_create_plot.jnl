@@ -1,0 +1,56 @@
+!\cancel mode verify
+cancel mode logo
+
+!=================================================
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@cea.fr
+! $Date: 2009/05/14 15:09:35 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.5 $
+! History:
+! Modification:
+!
+!=================================================
+
+!##################################################################
+! ($01) = file
+! ($02) = var
+! ($03) = smoothing box applied to var
+!##################################################################
+
+!===========================================
+use "($01)"
+
+!===========================================
+! Color for color 2
+ppl color 2, 50, 50, 50
+
+! Color for graticule
+ppl color 6, 80, 80, 80
+
+!===========================================
+set window/size=0.4 1
+go margins_set 15 15 10 08 
+
+plot/nolab/grat=(dash,color=6)/thick=1/color=2 ($02)
+plot/over/nolab/thick=1/color=1 ($02)[l=@SBX:($03)]
+
+go text_put 05 95 "@AS`($02),return=dset`.nc" -1 0.3
+go text_put 10 90 "@AS`($02),return=title` (`($02),return=units`)" -1 0.35
+
+! To be compatible with ferret release where stat not available
+!stat ($02)
+let varstat=xsequence(($02))
+def sym STAT_MIN=`varstat[i=@min]`
+def sym STAT_MAX=`varstat[i=@max]`
+def sym STAT_MEAN=`varstat[i=@ave]`
+def sym STAT_STD=`varstat[i=@var]^0.5`
+let var_min =  {SPAWN:"echo ($STAT_MIN)  | format_number %.3e"}
+let var_max =  {SPAWN:"echo ($STAT_MAX)  | format_number %.3e"}
+let var_mean = {SPAWN:"echo ($STAT_MEAN) | format_number %.3e"}
+let var_std =  {SPAWN:"echo ($STAT_STD)  | format_number %.3e"}
+
+go text_put 78 93 "@ASMin:<NL>Max:<NL>Mean:<NL>Std:" -1 0.25
+go text_put 84 93 "@AS`var_min`<NL>`var_max`<NL>`var_mean`<NL>`var_std`" -1 0.25
+
+!===========================================

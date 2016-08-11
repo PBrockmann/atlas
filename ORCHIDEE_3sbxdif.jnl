@@ -1,0 +1,115 @@
+!**************************************************************
+! Author: Rachid Benshila
+! Contact: rbipsl@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:34 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification: Martial Mancip
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+
+
+def sym thetitle=($1)
+let thetitle="($1)"
+def sym file1=($2)
+def sym file2=($3)
+def sym file3=($4)
+
+def sym variable1=($5)
+let var1=($variable1)
+def sym variable2=($6)
+let var2=($variable2)
+
+def sym ssbx=($9%49%)
+def sym fyear=($7)
+def sym t_0="1-JAN-`($fyear)`:00:00"
+!************************************************************
+
+go page_new -i 1 2 0 100 0 90
+
+set v 1
+go margins_set 20 20 15 15
+
+DEFINE VIEWPORT/XLIM=0,1/YLIM= .3,1 V1
+set VIEWPORT V1
+************************************************************
+
+use "($file1)"
+go symbol_basename_and_define basefile1 "($file1)"
+let varobs0=var1[d=($basefile1)]
+!-----------
+
+use "($file2)"
+go symbol_basename_and_define basefile2 "($file2)"
+let variable2a0=var2[d=($basefile2)]
+!-----------
+
+use "($file3)"
+go symbol_basename_and_define basefile3 "($file3)"
+let variable3=var2[d=($basefile3)]
+
+!--------------------
+cancel symbol length*
+def  sym length=`varobs0, return=lsize`
+def  sym length1=($length)*0.5-1
+def axis/T0=($t_0)/T=1:`($length1)`:0.5/units=hours my_taxis
+!def axis/T0="1-JAN-0000:00:00"/T=1:`($length1)`:0.5/units=hours/calendar=NOLEAP my_taxis
+
+!--------------------
+let varobs=tsequence(varobs0[k=@sum])
+let obs=varobs[gt=my_taxis@asn,d=($basefile1),l=@sbx:($ssbx)]
+!let obs=varobs[d=($basefile1),l=@sbx:($ssbx)]
+let myunit="($8)"
+set variable/units="`myunit`"/title="`thetitle`" obs
+!-----------
+let variable2a=variable2a0[k=@sum]
+let vartag=tsequence(variable2a)
+let tag=vartag[gt=my_taxis@asn,l=@sbx:($ssbx)]
+!let tag=vartag[l=@sbx:($ssbx)]
+!-----------
+let variable3a=variable3[k=@sum]
+let varnew=tsequence(variable3a)
+let new=varnew[gt=my_taxis@asn,l=@sbx:($ssbx)]
+!let new=varnew[l=@sbx:($ssbx)]
+
+!---------------------
+go 3winsize.jnl obs tag new
+
+plot/grat=(dash,color=black)/line=1/title=""/set_up/vlimit=`min`:`max` obs
+go unlabels 1 8
+ppl TXTYPE,YR,MON 
+ppl TXLINT,1,1
+ppl plot
+plot/line=2/nolab/over tag 
+plot/line=3/nolab/over new
+
+!---------------------
+let diff1=tag-obs
+set variable/units="`myunit`"/title="`thetitle`" diff1
+let diff2=new-obs
+go 3winsize.jnl diff1 diff2 diff2
+
+DEFINE VIEWPORT/XLIM=0,1/YLIM=0,.35 V2
+set VIEWPORT V2
+plot/grat=(dash,color=black)/line=2/title=""/set_up/vlimit=`min`:`max` diff1
+go unlabels 1 8
+ppl TXTYPE,YR,MON 
+ppl TXLINT,1,1
+ppl plot 
+plot/line=3/nolab/over diff2
+
+!--------------------
+go textlayer_new
+go text_legend_put 10 25 34 " @AS($basefile1)" 1 
+go text_legend_put 10 25 32 " @AS($basefile2)" 2
+go text_legend_put 10 25 30 " @AS($basefile3)" 3 
+go textlayer_text_put 50 95 "@AS($thetitle)" 0 0.5
+go logo_put ipsl
+
+
+

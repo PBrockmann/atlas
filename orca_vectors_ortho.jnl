@@ -1,0 +1,102 @@
+!\cancel mode verify
+
+!**************************************************************
+! Description:
+!
+! Usage:
+!
+! Example:
+!
+! Notes:
+!
+! Calls:
+!
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:35 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.5 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+!-----------------------------------------------
+! file1 -> basemap
+! file2 -> vector u component 
+! file3 -> vector v component
+! arg10 --> the motif to replace by the arg11 to form file2
+!           and also the motif to replace by the arg12 to form file3 
+
+def sym file1=$1
+def sym variable1 = $2
+def sym CM = $3%80%
+def sym CP = $4%0%
+def sym zoom = $5%0.5%
+def sym qualifiers1 = $6%/nolab/line/pal=grads%
+def sym basemap_title = $7%($variable1)%
+def sym basemap_overlay1_args = $8%/line=7/over earth_continents%
+def sym basemap_overlay2_args = $9%/line=2/over graticule_10s%
+
+def sym motif = ($10)
+go symbol_replace_and_define file2 ($file1) ($motif) ($11)
+go symbol_replace_and_define file3 ($file1) ($motif) ($12)
+def sym variable2 = ($13)
+def sym variable3 = ($14)
+def sym vector_title = ($15%"Wind units"%)
+
+def sym vector_skip = ($16%1%)
+def sym vector_length = ($17%0.1%)   ! this vector norm will be represented by a 0.5 inch length vector
+def sym model = ($18%ORCA2.0%)   
+
+!-----------------------------------------------
+go page_new -i 1 1 0 100 10 90
+
+set v 1
+
+!-----------------------------------------------
+use "($file1)"
+go symbol_basename_and_define basefile1 "($file1)"
+use "($file2)"
+go symbol_basename_and_define basefile2 "($file2)"
+use "($file3)"
+go symbol_basename_and_define basefile3 "($file3)"
+
+!-----------------------------------------------
+let variable1=($variable1)
+
+use "($model)_grid.nc"
+let var1=var*mask[d=($model)_grid.nc,k=1]
+
+go map_ortho ($model) ($CM) ($CP) variable1 30 ($qualifiers1)/hlim=-($zoom):($zoom)/vlim=-($zoom):($zoom)
+
+go cont_ortho2 ($CM) ($CP) ($basemap_overlay1_args)
+go cont_ortho2 ($CM) ($CP) ($basemap_overlay2_args)
+
+go text_put 50 10 "($basemap_title)" 0 0.5
+
+!-----------------------------------------------
+let u=($variable2)
+let v=($variable3)
+go orca_vectors_ortho_over ($CM) ($CP) u v ($vector_skip) ($vector_length)
+
+!-----------------------------------------------
+go text_put 15 13 "($vector_length) ($vector_title)" -1
+go vector_key_put 15 12
+
+!-----------------------------------------------
+go logo_put ipsl
+
+go textlayer_new
+go textlayer_text_put 5 95 "@ASBasemap : ($basefile1)" -1 0.35
+go textlayer_text_put 5 92 "@AS           ($variable1)" -1 0.35
+go textlayer_text_put 5 89 "@ASVector U : ($basefile2)" -1 0.35
+go textlayer_text_put 5 86 "@AS           ($variable2)" -1 0.35
+go textlayer_text_put 5 83 "@ASVector V : ($basefile3)" -1 0.35
+go textlayer_text_put 5 80 "@AS           ($variable3)" -1 0.35
+
+
+!**************************************************
+set mode/last verify
+
+exit

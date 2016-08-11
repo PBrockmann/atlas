@@ -1,0 +1,69 @@
+!\cancel mode verify
+
+!=================================================
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@cea.fr
+! $Date: 2009/05/14 15:09:35 $ 
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.5 $
+! History:
+! Modification:
+!
+!=================================================
+set memory/size=100
+
+go ($01)
+
+def sym var=($02)
+let var=($03)          ! needed to calculate lend, var will be redefined later
+let vararea=(($04%1%))
+
+def sym title=($05)
+def sym units=($06)
+
+!=================================================
+def sym lend2=`var,return=lend`
+
+let isexist = {spawn:"if [ -f ($07) ] ; then echo 1; else echo 0; fi"}
+if `isexist` then
+	use "($07)"
+	def sym lend1=`var,return=lend`
+	def sym llimits=/append/l=`($lend1)+1`:($lend2)
+else
+	def sym llimits=/append
+endif
+
+! 2 following lines have been added to recreate all monitoring files where tsequence was used
+! (to remove in one month from 26/08/2009)
+! No more append mode (18/09/2009)
+spawn "rm -f ($07)"
+def sym llimits=/append
+
+!=================================================
+! Area weighted average is calculated only if area is different from 1 or 2
+if ($04%1|1>TRUE|*>FALSE%) then
+	let var=($03)
+	let ($var)_0=var
+elif ($04%1|2>TRUE|*>FALSE%) then
+	let var=($03)
+	let ($var)_0=var[x=@sum,y=@sum,k=@sum]
+else
+	let var=(($03))*vararea
+	let ($var)_0=missing(var[x=@sum,y=@sum]/vararea[x=@sum,y=@sum],0)
+endif
+
+!=================================================
+if ($08%0|1>TRUE|*>FALSE%) then
+	! keep time coordinates
+	let/title="($title)"/units="($units)" ($var)=($var)_0
+else
+	let/title="($title)"/units="($units)" ($var)=tsequence(($var)_0)
+endif
+
+!=================================================
+show var
+show data
+
+!=================================================
+save/file="($07)"($llimits) ($var)
+

@@ -1,0 +1,16 @@
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:34 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+cancel data LMDZ_coef_AP.txt
+cancel data LMDZ_coef_BP.txt
+cancel data LMDZ_stdpressurelevels.nc
+

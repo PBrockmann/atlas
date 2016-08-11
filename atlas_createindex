@@ -1,0 +1,100 @@
+#!/bin/ksh
+#
+# Author: Patrick Brockmann
+# Contact: Patrick.Brockmann@cea.fr
+# $Date: 2009/05/14 15:09:34 $
+# $Name: ATLAS_608_1_5 $
+# $Revision: 1.1.1.5 $
+# History:
+# Modification:
+#
+
+#---------------------------------------------
+texthtml=""
+
+#---------------------------------------------
+while [ $# -ne 0 ]
+do
+        case $1 in
+        -h|--help|-help)
+                echo "----------------------------------------------------------------------------"
+                echo "Usage: atlas_createindex [-h] [-d] [-t 'text'] directory"
+                echo
+                echo "Description: Create an 'index.html' for the given input directory."
+                echo "             Javascript tabs are used to present the different images pregenerated"
+                echo "             (all, global, heminorth, hemisouth, land, ocean) and accessible from"
+                echo "             the 'images' directory of the input directory."
+                echo "             An 'html' directory is added to the input directory to provide"
+                echo "             the javascript features."
+		echo
+                echo "Options:"
+                echo "   -t, --text"
+                echo "       Text set as title. Single quote should be used."
+                echo "       Below a complicated example with !,', html accents and tags"
+                echo "       $ atlas_createindex -t 'Bient\&ocirc;t l'\''\&eacute;t\&eacute;...<BR>Encore quelques mois tout de m\&ecirc;me \!' directory"                                                                                                       echo     
+                echo
+		echo "----------------------------------------------------------------------------"
+                exit ;;
+        -d|--debug)
+                set -x
+                shift ;;
+        -t|--text)
+	        texthtml=$2
+		shift 2 ;;
+        -*)
+                atlas_createindex -h
+                exit ;;
+        *)
+                break ;;
+
+        esac
+done
+
+if [ $# -lt 1 ] ; then
+        atlas_createindex -h
+        exit
+fi
+
+#---------------------------------------------
+dirin=$1
+
+#---------------------------------------------
+cd ${dirin}
+
+#---------------------------------------------
+function PRINTHTML {
+for file in `ls -rt $@ 2>/dev/null` ; do
+	basefile=`basename $file | sed -e "s/.gif//"`	
+        printf "<!==============>\\\\n"
+        printf "<table border=\"0\" align=\"left\">\\\\n"
+        printf "<tr><td>\\\\n"
+        printf "<a href=javascript:popimage(\"${file}\")>\\\\n"
+        printf "<img src=\"${file%%.gif}.jpg\" border=\"0\"></a>\\\\n"
+        printf "</tr></td>\\\\n"
+        printf "<tr><td align=\"left\">\\\\n"
+        printf "<a href=javascript:popimage(\"${file}\")>\\\\n"
+        printf "${basefile}</a>\\\\n"
+        printf "</tr></td>\\\\n"
+        printf "</table>\\\\n"
+done
+}
+
+#---------------------------------------------
+# Transform the index.html template
+
+sed -e "s#XXXXXX#$( echo ${texthtml} )#" \
+    -e "s#AAAAAA#$( PRINTHTML ATM/*/*.gif )#" \
+    -e "s#IIIIII#$( PRINTHTML ICE/*/*.gif )#" \
+    -e "s#OOOOOO#$( PRINTHTML OCE*/*/*.gif )#" \
+    -e "s#SSSSSS#$( PRINTHTML SRF/*/*.gif )#" \
+    -e "s#TTTTTT#$( date +"%F %T" )#" \
+    -e "s#UUUUUU#$( whoami )#" \
+    -e "s#HHHHHH#$( hostname -f )#" \
+`which $0`.index.html.template > index.html
+
+#---------------------------------------------
+# Copy the html directory to provide javascript features
+
+rm -rf html
+cp -Rf `which $0`.dirhtml html
+

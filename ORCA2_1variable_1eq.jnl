@@ -1,0 +1,52 @@
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:34 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+def sym file=($01)
+def sym variable1=($02)
+def sym qualifiers=/nolab/nokeytitle=""($03% %)
+def sym method=($04%shade%)
+def sym lonrange=($05%X=-180:180%)
+
+!************************************************************
+let variable1=($variable1)
+
+use "($file)"
+
+use "ORCA2.0_grid.nc"
+def axis/units="degrees_east"/from_data/name=my_xaxis/X/modulo lon[j=74]
+cancel data ORCA2.0_grid.nc
+
+let variable1_a=variable1[j=71:77@ave]
+let variable1_b=variable1_a[gx=my_xaxis@asn]
+
+go page_new -i 1 1 0 100 10 90
+
+set v 1
+go margins_set 10 10 15 15
+($method)($qualifiers) variable1_b[($lonrange)]
+ppl shaset protect
+
+define view/xlim=0,1/ylim=0,0.1 colorbar
+set v colorbar
+go colorbar_put -h 10 90 60 80 0.3 ($qualifiers)
+
+go logo_put ipsl
+
+go textlayer_new
+go symbol_basename_and_define basefile "($file)"
+go textlayer_text_put 5 96 "@AS($basefile)" -1 0.35
+go textlayer_text_put 5 93 "@AS($variable1)" -1 0.35
+go textlayer_stat2_put 5 90 variable1_b -1 0.25
+

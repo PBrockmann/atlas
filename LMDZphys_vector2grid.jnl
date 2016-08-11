@@ -1,0 +1,63 @@
+\cancel mode verify
+
+!**************************************************************
+! Description:
+!
+! Usage: go LMDZphys_vector2grid command variable
+!
+! Example: go LMDZphys_vector2grid shade/lev=10 masque
+!          go LMDZphys_vector2grid fill/lev=(-INF)(200,300,10)(INF) TS01
+!          go LMDZphys_vector2grid shade TANCIEN 4
+!
+! Notes:
+!
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:34 $ 
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.10 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+def sym method=$1
+let var=$2
+def sym klevel=$3%1%
+
+!****************************
+! Inital vector=6722 points
+! to reshape on a 96x70 grid (6720 points)
+! + 2 special points i=1 and i=6722 (not used in regridding)
+
+!****************************
+! Reshaping
+def axis/x=1:96:1 myxaxis_1
+def axis/y=1:70:1 myyaxis_1
+
+let var_1=x[gx=myxaxis_1]*y[gy=myyaxis_1]
+let var_2=reshape(var[i=`2+(($klevel)-1)*6722`:`6721+(($klevel)-1)*6722`],var_1)
+
+! Reverse order of j indexes 
+let myaxis_2= 71-j[j=1:70]
+let var_3=samplej(var_2,myaxis_2)
+
+! Regrdding on geographic grid
+def axis/x/units=degrees_east/modulo/from_data/name=myxaxis_3 longitude[i=2:97]
+def axis/y/units=degrees_north/from_data/name=myyaxis_3 -1*latitude[i=2:6721:96]
+def grid/x=myxaxis_3/y=myyaxis_3 mygrid
+
+!let var_regridded=var_3[gx=myxaxis_3@asn,gy=myyaxis_3@asn]
+let var_regridded=var_3[g=mygrid@asn]
+
+if `($klevel) ne 1` then
+	set variable/title="$2 at klevel ($klevel)" var_regridded
+else
+	set variable/title="$2" var_regridded
+endif
+
+($method) var_regridded
+
+!save/clobber/file="file_out.nc" var_regridded
+
+

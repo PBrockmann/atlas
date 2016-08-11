@@ -1,0 +1,47 @@
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@cea.fr
+! $Date: 2009/05/14 15:09:34 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.6 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+def sym file1=($01)
+def sym variable1=($02)
+def sym pressure1=($03)
+def sym qualifiers1=($04%/pal=fast_001/lev=10/title=""%)
+def sym method1=($05%shade%) 
+
+def sym file2=($06)
+def sym variable2=($07)
+def sym qualifiers2=($08%/line=1/nolab/over/lev/title=""%)
+def sym method2=($09%contour%) 
+
+def sym limitup=($10%1%)
+def sym limitdown=($11%1200%)
+
+def sym model_1st=($12%model_1st%)
+
+!************************************************************
+
+
+!=============================
+if `"($model_1st)" ne "data_1st"` then
+
+	go LMDZ50_2variables_logzonal_HALOE_model_1st.jnl ($file1) ($variable1) ($pressure1) ($qualifiers1) ($method1) ($file2) ($variable2) ($qualifiers2) ($method2) ($limitup) ($limitdown)
+
+!=============================
+else
+
+	go LMDZ50_2variables_logzonal_HALOE_data_1st.jnl ($file1) ($variable1) ($pressure1) ($qualifiers1) ($method1) ($file2) ($variable2) ($qualifiers2) ($method2) ($limitup) ($limitdown)
+
+!=============================
+endif
+

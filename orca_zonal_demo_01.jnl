@@ -1,0 +1,58 @@
+\cancel mode verify
+
+!**************************************************************
+! Description:
+!
+! Usage:
+!
+! Example:
+!
+! Notes:
+!
+! Calls:
+!
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:35 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.5 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+go page_new -i 1 2
+
+!**************************************************
+use ORCA2.0_zonalbands_05.nc 
+
+set v 1
+go map_ortho ORCA2.0 0 60 zonalbands 10 /line/lev=1D/pal=rainbow_by_levels/title="Zonal Bands of 5 degrees" graticule_05s
+
+cancel data/all
+
+!**************************************************
+use "../output_cpl/2L27_SE_2030_2039_output/2L27_SE_2030_2039_grid_T.nc"
+
+set v 2
+
+go margins_set 20 20 15 15
+
+go orca_zonal_unweighted.jnl 5 sosstsst[l=1,d=1] plot/sym=4/line/VLIM=-90:90:5/HGRAT=(DASH,COLOR=blue)/transpose/title="sosstsst[l=1,d=1] unweighted"/set_up
+go unlabels 1 5
+ppl plot
+
+go orca_zonal_weighted.jnl 5 sosstsst[l=1,d=1] plot/over/sym=4/line/VLIM=-90:90:5/HGRAT=(DASH,COLOR=blue)/transpose/title="sosstsst[l=1,d=1] weighted"/set_up
+go unlabels 1 5 
+ppl plot/over
+
+cancel data/all
+
+!**************************************************
+set mode/last verify
+
+exit
+
+! ferret -server -batch orca_zonal_demo_01.ps -script  orca_zonal_demo_01.jnl sosstsst[l=1]
+! ps2gif orca_zonal_demo_01.ps
+! ps2pdf orca_zonal_demo_01.ps

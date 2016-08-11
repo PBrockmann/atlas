@@ -1,0 +1,60 @@
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:34 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+
+def sym title=$1
+def sym file=$2
+def sym variable1=$3
+def sym pressure1=$4
+def sym qualifiers=$5%" "%
+def sym method=$6%" "%
+def sym vlim_min=$7%" "%
+def sym vlim_max=$8%" "%
+ppl set units $9% %
+
+!************************************************************
+go page_new -li 1 1 
+
+set v 1
+
+go margins_set 20 10 10 10
+go LMDZ_logzonal ($file) ($variable1) ($pressure1) /title=" "($qualifiers) ($method) ($vlim_min) ($vlim_max) "($title)" "($units)"
+
+go text_put 5 95 "@AS($title)" -1 0.3
+go text_put 5 92 "@AS($variable1)" -1 0.3
+go text_put 93 85 "@AS($units)" 0 0.3
+
+!************************************************************
+! variable1z is defined in LMDZ_logzonal.jnl
+! and represents the variable1 regridded on pressure axis
+! Bellow some lines from text_stat3.jnl that cannot be used
+! directly since dimension i is reduced by @ave operator to get zonal variable
+ 
+let ME_var=variable1z[i=@ave,d=($basefile)]
+
+def sym ME_varmin=`ME_VAR[j=@min,k=@min],P=-3`
+def sym ME_varmax=`ME_VAR[j=@max,k=@max],P=-3`
+
+def sym ME_varavg=`ME_VAR[j=@ave,k=@ave],P=-3`
+def sym ME_varstd=`ME_VAR[j=@var,k=@var]^0.5,P=-3`
+
+def sym ME_textpart1=Weighted Avg: ($ME_varavg)  Std: ($ME_varstd)
+def sym ME_textpart2=Min: ($ME_varmin)  Max: ($ME_varmax)
+
+ppl set ME_textline ($ME_textpart1) ($ME_textpart2)
+
+go text_put.jnl 5 85 "($ME_textline)" -1 0.3
+
+!************************************************************

@@ -1,0 +1,38 @@
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:35 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+def sym file=$1
+def sym variable=$2
+def sym qualifiers=/nolab/title=""$3% %
+def sym palette=$4%default.spk%
+def sym arg5=$5%none%
+if ($arg5%|none>false|*>true|%) then
+    def sym cmdarg5=go land
+else
+    def sym cmdarg5=go null_command
+endif
+
+!************************************************************
+let variable=($variable)
+
+use "($file)"
+
+go margins_set 10 10 10 10
+shade($qualifiers)/pal="($palette)" variable
+($cmdarg5) 
+
+go symbol_basename_and_define basefile "($palette)"
+go text_put 25 93 "@AScolor palette = ($basefile)" -1 0.8 
+

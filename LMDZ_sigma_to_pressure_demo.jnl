@@ -1,0 +1,32 @@
+
+!def sym file="/dmnfs/p86broc/L27_SE_2030_2039_output/L27_SE_2030_2039_histmth.nc"
+def sym file="/home/brock/output_cpl/L27_SE_2030_2039_output/L27_SE_2030_2039_histmth.nc"
+use ($file)
+
+!========================================================
+set window 1
+
+use LMDZ_stdpressurelevels.nc
+
+!----------------------
+! Regridding on 17 levels from LMDZ_stdpressurelevels.nc
+! using ZAXREPLACE(V,ZVALS,ZAX)
+!    Regrid V onto Z axis of ZAX based upon Z values in ZVALS using linear interpolation
+!        V: variable on native Z axis
+!        ZVALS: Z-value field corresponding to data points of V
+!        ZAX: variable with desired Z (depth) axis points
+let new_temp = ZAXREPLACE(temp[d=1],pres[d=1]/100,Z[GZ=LMDZ_stdpressurelevels])
+
+!----------------------
+set variable/title="Temperature"/units="K" new_temp
+
+shade new_temp[i=@ave,l=1,d=1]
+
+cancel data/all
+
+!========================================================
+set window 2
+
+! The same with a vertical log axis by using the script LMDZ_logzonal.jnl
+go LMDZ_logzonal.jnl ($file) temp[l=1] pres[l=1]/100 /lev=20 shade 1 1000
+

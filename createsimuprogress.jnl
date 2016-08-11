@@ -1,0 +1,70 @@
+\cancel mode verify
+
+!**************************************************************
+! Description: Create an image to show current state of a run
+!
+! Usage: ferret -gif -script createsimuprogress.jnl CalendarType Delta Units DateBegin DateEnd DateCurrent ImageFile
+!
+! Ex: ferret -gif -script createsimuprogress.jnl 360d 5 Days 01-JAN-1860 30-DEC-2100 30-DEC-1890 imagefile.gif
+!
+! Calls: gif_setsize
+!        margins_set
+!
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:35 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.2 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+def sym CalendarType=($01)
+def sym Delta=($02)
+def sym Units=($03)
+def sym DateBegin=($04)
+def sym DateEnd=($05)
+def sym DateCurrent=($06)
+def sym ImageName=($07%simuprogress.gif%)
+
+!------------------------------------
+set mode verify
+def axis/t="($DateBegin)":"($DateEnd)":($Delta)/edges/units="($Units)"/cal="($CalendarType)" simutaxis1
+let varsimu=t[gt=simutaxis1]
+def sym varsimu_lend=`varsimu,return=lend`
+
+!------------------------------------
+def axis/t="($DateBegin)":"($DateCurrent)":($Delta)/edges/units="($Units)"/cal="($CalendarType)" simutaxis2
+let varsimu_current=t[gt=simutaxis2]
+def sym varsimu_current_lend=`varsimu_current,return=lend`
+
+if `($varsimu_current_lend) GT ($varsimu_lend)` then
+	def sym varsimu_current_lend=($varsimu_lend)
+endif
+!------------------------------------
+go gif_setsize 800 300
+
+!------------------------------------
+set v FULL
+
+go margins_set 10 80 5 5 
+
+!------------------------------------
+polygon/nolab/noaxes/line/fill/pal=gray_light {`varsimu[l=1]`,`varsimu[l=($varsimu_lend)]`,`varsimu[l=($varsimu_lend)]`,`varsimu[l=1]`},{0,0,1,1}
+
+!------------------------------------
+polygon/nolab/noaxes/line/fill/pal=orange/over {`varsimu[l=1]`,`varsimu[l=($varsimu_current_lend)]`,`varsimu[l=($varsimu_current_lend)]`,`varsimu[l=1]`},{0,0,1,1}
+
+!------------------------------------
+plot/vlim=0:1/nolab/axes=(0,1,0,0)/vgrat=(DASH,color=black) t[gt=simutaxis1]*-1E+34
+
+!------------------------------------
+frame/file="($ImageName).tmp"
+
+spawn convert ($ImageName).tmp -crop -0-200 ($ImageName)
+spawn rm -f ($ImageName).tmp
+
+!**************************************************************
+set mode verify
+

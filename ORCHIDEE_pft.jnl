@@ -1,0 +1,105 @@
+!**************************************************************
+! Author: Nicolas Vuichard
+! Contact: vuichard@lsce.ipsl.fr
+! $Date: 2010/04/08 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification: 
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+
+
+def sym thetitle=($1)
+
+def sym file1=($2)
+def sym file2=($3)
+
+def sym variable=($4)
+let var=($variable)
+
+!************************************************************
+
+go page_new -i 1 2 0 100 0 90
+
+set v 1
+go margins_set 20 20 15 15
+
+DEFINE VIEWPORT/XLIM=0,1/YLIM= .3,1 V1
+set VIEWPORT V1
+go margins_set 20 20 55 15
+************************************************************
+
+use "($file1)"
+go symbol_basename_and_define basefile1 "($file1)"
+!-----------
+
+use "($file2)"
+go symbol_basename_and_define basefile2 "($file2)"
+
+!---------------------
+
+let var_pft=zsequence(var[l=1])*l[l=1:13]/l[l=1:13]
+set  variable/title=" `($variable),return=title`"/units="`($variable),return=unit`" var_pft
+shade/hlimits=1:2:1/levels=(0,1.1,0.1)/nolabel/noaxis var_pft[d=($basefile2)]
+
+PPL AXLABP 0,0 !turn off numeric labels
+ppl AXLSZE 0.95,0.25
+PPL LABSET 0.3 0.3 0.3 0.3
+ppl shade
+let txt_pft={\
+"                         Bare soil",\
+" Tropical broad-leaved     evergreen",\
+" Tropical broad-leaved     raingreen",\
+"Temperate    needleleaf     evergreen",\
+"Temperate broad-leaved     evergreen",\
+"Temperate broad-leaved summergreen",\
+" Boreal     needleleaf     evergreen",\
+"   Boreal broad-leaved summergreen",\
+" Boreal     needleleaf summergreen",\
+"                  C3         grass",\
+"                  C4         grass",\
+"                 C3    agriculture",\
+"                 C4    agriculture"}
+repeat/i=1:13 (\
+let xlegend=txt_pft[i=`i`] ;\
+let my_y=(($PPL$YMIN)+`i-0`- ($PPL$YORG))*(($PPL$YLEN)/(($PPL$YMAX)-($PPL$YMIN)+1)); \
+let my_x=($PPL$XMIN)-1.2 ; \
+label/nouser `my_x`,`my_y`,1,0,.15 `xlegend` )
+
+
+
+
+!---------------------
+let diff=var_pft[d=($basefile2)]-var_pft[d=($basefile1)]
+set variable/title=" `($variable),return=title`"/units="`($variable),return=unit`" diff
+
+DEFINE VIEWPORT/XLIM=0,1/YLIM=0,.35 V2
+set VIEWPORT V2
+go margins_set 20 20 55 15
+shade/hlimits=1:2:1/nolabel/noaxis diff
+PPL AXLABP 0,0 !turn off numeric labels
+ppl AXLSZE 0.95,0.25
+PPL LABSET 0.3 0.3 0.3 0.3
+ppl shade
+
+repeat/i=1:13 (\
+let xlegend=txt_pft[i=`i`] ;\
+let my_y=(($PPL$YMIN)+`i-0.6`- ($PPL$YORG))*(($PPL$YLEN)/(($PPL$YMAX)-($PPL$YMIN)+1)); \
+let my_x=($PPL$XMIN)-1.2 ; \
+label/nouser `my_x`,`my_y`,1,0,.1 `xlegend` )
+
+!--------------------
+go textlayer_new
+go textlayer_text_put 50 35 "@ASDiff with" 0 0.5
+go textlayer_text_put 50 32 "@AS($basefile2)" 0 0.3
+go textlayer_text_put 50 95 "@AS($thetitle)" 0 0.5
+go textlayer_text_put 50 90 "@AS($basefile1)" 0 0.3
+go logo_put ipsl
+
+
+

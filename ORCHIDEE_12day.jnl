@@ -1,0 +1,109 @@
+!**************************************************************
+! Author: Rachid Benshila
+! Contact: rbipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:34 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+
+def sym thetitle=$1
+def sym file1=$2
+def sym file2=$3
+def sym file3=$4
+def sym var_obs=$5
+def sym var=$6
+def sym annee=$7%none%
+
+!**************************************************************
+use "($file1)"
+go symbol_basename_and_define basefile1 "($file1)"
+
+if ($annee%|none>true|*>false|%) then
+    def sym annee=0
+endif
+
+!************************************************************
+
+go page_new -i 1 1 0 100 0 90
+set v 1
+
+go margins_set 20 20 15 15
+use "($file2)"
+go symbol_basename_and_define basefile2 "($file2)"
+use "($file3)"
+go symbol_basename_and_define basefile3 "($file3)"
+
+let obs_0=($var_obs)
+let obs=tsequence(obs_0[d=($basefile1),k=@sum])
+set variable/title="`($var_obs)[d=($basefile1)],return=title`"/units="`($var_obs)[d=($basefile1)],return=unit`" obs
+let var_0=($var)
+let tag=tsequence(var_0[d=($basefile2),k=@sum])
+let new=tsequence(var_0[d=($basefile3),k=@sum])
+
+DEFINE VIEWPORT/XLIM=0,.33/YLIM= .625,.9 V1
+set VIEWPORT V1
+go month2day_3plot.jnl obs tag new 1 `($annee)`
+
+DEFINE VIEWPORT/XLIM=.33,.66/YLIM= .625,.9 V2
+set VIEWPORT V2
+go month2day_3plot.jnl obs tag new 2 `($annee)`
+ 
+DEFINE VIEWPORT/XLIM=.66,1/YLIM= .625,.9 V3
+set VIEWPORT V3
+go month2day_3plot.jnl obs tag new 3 `($annee)` 
+ 
+DEFINE VIEWPORT/XLIM=0,.33/YLIM= .425,.7 V4
+set VIEWPORT V4
+go month2day_3plot.jnl obs tag new 4 `($annee)`
+
+DEFINE VIEWPORT/XLIM=.33,.66/YLIM= .425,.7 V5
+set VIEWPORT V5
+go month2day_3plot.jnl obs tag new 5 `($annee)` 
+
+DEFINE VIEWPORT/XLIM=.66,1/YLIM= .425,.7 V6
+set VIEWPORT V6
+go month2day_3plot.jnl obs tag new 6 `($annee)`
+
+DEFINE VIEWPORT/XLIM=0,.33/YLIM= .225,.5 V7
+set VIEWPORT V7
+go month2day_3plot.jnl obs tag new 7 `($annee)` 
+
+DEFINE VIEWPORT/XLIM=.33,.66/YLIM= .225,.5 V8
+set VIEWPORT V8
+go month2day_3plot.jnl obs tag new 8 `($annee)`
+
+DEFINE VIEWPORT/XLIM=.66,1/YLIM= .225,.5 V9
+set VIEWPORT V9
+go month2day_3plot.jnl obs tag new 9 `($annee)`
+
+DEFINE VIEWPORT/XLIM=0,.33/YLIM= .025,.3 V10
+set VIEWPORT V10
+go month2day_3plot.jnl obs tag new 10 `($annee)`
+
+DEFINE VIEWPORT/XLIM=.33,.66/YLIM= .025,.3 V11
+set VIEWPORT V11
+go month2day_3plot.jnl obs tag new 11 `($annee)`
+
+DEFINE VIEWPORT/XLIM=.66,1/YLIM= .025,.3 V12
+set VIEWPORT V12
+go month2day_3plot.jnl obs tag new 12 `($annee)`
+
+go textlayer_new
+go textlayer_text_put 50 95 "@AS($thetitle) : YEAR `($annee)+1`" 0 0.5
+go text_legend_put 5 15 90 " @AS($basefile1)" 1
+go text_legend_put 5 15 88 " @AS($basefile2)" 2
+go text_legend_put 5 15 86 " @AS($basefile3)" 3
+go logo_put ipsl
+
+
+
+
+
+

@@ -1,0 +1,434 @@
+#!/bin/ksh
+#
+# Author: Patrick Brockmann
+# Contact: Patrick.Brockmann@cea.fr
+# $Date: $
+# $Name: $
+# $Revision: $
+# History:
+# Modification:
+#   * Input files can be partionned 
+#   * Input files can be searched from a pathfiletemplate
+#   * To be able to use option --liscommand 'IGCM_sys_RshArchive ls'
+#     monitoring01 must be run as dot script (. monitoring01)
+#     That implies that exit command must not be used and must be replaced by a return command
+#     otherwise the script monitoring01 exits and the father script that calls monitoring01 also.
+#     This concerns specifically options -l1 and -l2 that list patterns and files to use 
+#     and where then command 'return 0' (no error) has now been used
+#
+
+#---------------------------------------------
+quiet=0
+listfilespatternsused=0
+listfilesused=0
+outputdir=monitoring01_$$
+prefix=file
+text=""
+debugflag=""
+cardanalysis=0
+listcommand=ls
+time=0
+
+#---------------------------------------------
+while [ $# -ne 0 ]
+do
+        case $1 in
+        -h|--help|-help)
+                echo "----------------------------------------------------------------------------"
+                echo "Usage: monitoring01 [-h] [-q] [-l1] [-l2] [-o output_directory]"
+                echo "                  [-p prefix] [-t \"text\"]"
+                echo "                  [-c card_directory]"
+                echo "                  [--listcommand ls] [--time]]"
+		echo "         file.cfg pathfiletemplate"
+                echo
+                echo "Description:"
+                echo "   Monitoring is a shell script which monitore variables from time series."
+		echo "   It can process input files that are partionned into chunks."
+                echo
+                echo "Notes:"
+		echo "   Chunks must cover the same periods."
+		echo "   For example, if the monitoring create a new variable :"
+	        echo "       nettop = tops[d=1] - topl[d=2]"
+		echo "   If the first pattern, here tops, leads to the use of files :"
+	        echo "       piControl2_18000101_20491231_1M_tops.nc and piControl2_20500101_23391231_1M_tops.nc" 
+		echo "   Then files for topl pattern will be searched following the same names, ie :"
+		echo "       piControl2_18000101_20491231_1M_topl.nc and piControl2_20500101_23391231_1M_topl.nc" 
+                echo "   "
+                echo "Arguments:"
+		echo "   file.cfg"
+                echo "   "
+		echo "   pathfiletemplate [or directory]"
+		echo "              pathfiletemplate :"
+		echo "                        File name with pathname written as a template to all files."
+		echo "                        Use %var to indicate the variable name." 
+		echo "                        Example1: /dirA/dirB/%var/dirC/aaaa_%var_bbbb.nc"
+		echo "                        Example2: IGCM_OUT/IPSLCM5A/PROD/piControl/piControl2/ATM/Analyse/TS_MO/piControl2_*_1M_%var.nc"
+		echo "                        Example3: CMIP5/output/IPSL/IPSL-CM5A-LR/piControl/day/atmos/%var/r1i1p1/%var_day_IPSL-CM5A-LR_piControl_r1i1p1_*.nc"
+		echo "              directory :"
+		echo "                        Authorized as a backward compatibility feature."
+		echo "                        If argument is a directory then *_%var.nc is added to form a pathfiletemplate."
+                echo "   "
+                echo "Options:"
+		echo "   -h, --help, -help"
+		echo "       Print this manual."
+		echo
+                echo "   -q, --quiet"
+		echo "       Nothing is printed on standard output."
+		echo
+		echo "   -o, --output directory_name"
+		echo "       The name of the directory specified will be used as output directory."
+		echo "       Default is monitoring01_#processusnumber."
+		echo "       Specify a local directory name and NOT a pathname directory."
+		echo
+                echo "   -l1, --listfilespatternsused"
+		echo "       Return list of pattern to be used (read from file.cfg)."
+		echo
+                echo "   -l2, --listfilesused"
+		echo "       Return list of files to be used (read from file.cfg)."
+		echo "       List is made by expanding pattern to get file (error if not unique)".
+		echo "       Useful to know what files are to get from archive file system."
+		echo
+		echo "   --listcommand"
+		echo "       Default value is ls"
+		echo "       If list of file system archive is not possible,"
+		echo "       and monitoring01 run from libIGCM environment,"
+		echo "       then this option is avalaible to list files to be used."
+		echo "       In this case, set --listcommand 'IGCM_sys_RshArchive ls'"
+                echo
+		echo "   --time"
+		echo "       monitoring01_create_average.jnl will create average"
+		echo "       with heritage of time axis."
+		echo "       Default is to apply a tsequence and therefore get time axis as indices." 
+                echo
+                echo "   -t, --text"
+		echo "       Text used as title in monitoring index.html"
+		echo "       Use quotes as -t \"L27 monitoring\""
+		echo
+                echo "   -p, --prefix"
+		echo "       Prefix used for output file created by monitoring01_create_average.jnl"
+		echo
+                echo "   -c, --card"
+		echo "       Activate card analysis. To used only with libIGCM environment."
+		echo "       Indicate directory where to find config.card and run.card"
+		echo
+                echo "----------------------------------------------------------------------------"
+                return 1 ;;
+        -d|--debug)
+                set -x
+		debugflag=-d
+                shift ;;
+        -q|--quiet)
+                quiet=1
+                shift ;;
+        -l1|--listfilespatternsused)
+                listfilespatternsused=1
+                listfilesused=1
+                shift ;;
+        -l2|--listfilesused)
+                listfilesused=1
+                shift ;;
+        -o|--output)
+                outputdir=$2
+                shift 2 ;;
+        -t|--text)
+                text=$2
+                shift 2 ;;
+        --time)
+                time=1
+                shift 1 ;;
+        -p|--prefix)
+                prefix=$2
+                shift 2 ;;
+        -c|--card)
+                cardanalysis=1
+                carddir=$2
+                shift 2 ;;
+        -v|--verbose)
+                quiet=0
+                shift ;;
+        --listcommand)
+                listcommand=$2
+                shift 2 ;;
+        -*)
+                monitoring01 -h
+                return 1 ;;
+        *)
+                break ;;
+
+        esac
+done
+
+if [ $# -lt 2 ] ; then
+        monitoring01 -h
+	return 1 
+fi
+
+#---------------------------------------------
+function PRINT {
+if [ $quiet -ne 1 ] ; then
+   echo "$1"
+fi;
+}
+
+PRINT "monitoring01 mesg : ################################################"
+PRINT "monitoring01 mesg : monitoring01 released the 2010/12/22"
+
+#---------------------------------------------
+cfgfile=$1
+if [ ! -f ${cfgfile} ] ; then
+	echo "monitoring01 error: Cannot find ${cfgfile}"
+	return 1	
+fi
+
+#---------------------------------------------
+pathfiletemplate=$2
+# To be compatible with previous version of monitoring01 where $2 was a directory
+if [ -d ${pathfiletemplate} ] ; then
+	pathfiletemplate=${pathfiletemplate}/*_%var.nc
+fi
+PRINT "monitoring01 mesg : pathfilename = ${pathfiletemplate}"
+
+#=========================================
+# Analyze file.cfg
+
+eval set -A list_varname         -- $( awk -F'|' '{if ( NF==7 && ! /^#/ ) print $1}' $cfgfile )
+eval set -A list_filespatterns   -- $( awk -F'|' '{if ( NF==7 && ! /^#/ ) print $2}' $cfgfile )
+eval set -A list_filesadditional -- $( awk -F'|' '{if ( NF==7 && ! /^#/ ) print $3}' $cfgfile )
+eval set -A list_varoperations   -- $( awk -F'|' '{if ( NF==7 && ! /^#/ ) print $4}' $cfgfile )
+eval set -A list_vartitle        -- $( awk -F'|' '{if ( NF==7 && ! /^#/ ) print $5}' $cfgfile )
+eval set -A list_varunits        -- $( awk -F'|' '{if ( NF==7 && ! /^#/ ) print $6}' $cfgfile )
+eval set -A list_calcularea      -- $( awk -F'|' '{if ( NF==7 && ! /^#/ ) print $7}' $cfgfile )
+
+eval set -A color                -- $( awk '/color= */ {split($0,a,"=") ; print a[2]}' $cfgfile )
+eval set -A smooth               -- $( awk '/smooth= */ {split($0,a,"=") ; print a[2]}' $cfgfile )
+eval set -A script_create_ave    -- $( awk '/script_create_ave= */ {split($0,a,"=") ; print a[2]}' $cfgfile )
+
+#=========================================
+if [ ${#list_varname[*]} -eq 0 ] ; then
+	echo "monitoring01 error: No field to monitore"
+	return 1	
+fi
+
+#=========================================
+# Check duplicate fields from cfg file 
+tmpfile=`pwd`/`basename $0`.tmp.$$
+rm -f ${tmpfile}
+for varname in ${list_varname[*]} ; do
+	echo ${varname} >> ${tmpfile} 
+done
+list_varname_sorted=$( cat ${tmpfile} | sort | uniq -d | awk '{printf("%s ",$1)}' )
+rm -f ${tmpfile} 
+#echo ${list_varname_sorted[*]}
+
+if [ "${list_varname_sorted}" != "" ] ; then
+	PRINT "monitoring01 error: Found duplicate fields to calculate : ${list_varname_sorted}"
+	return 1	
+fi
+
+#=========================================
+# Check and list used filespatterns and files
+rm -rf ${tmpfile}
+PRINT "monitoring01 mesg : ################################################"
+for filepattern in ${list_filespatterns[*]} ; do
+	echo ${filepattern} >> ${tmpfile} 
+done
+list_filespatterns_sorted=`cat ${tmpfile} | sort | uniq | awk '{printf("%s ",$1)}'`
+rm -rf ${tmpfile} 
+
+list_files=""
+file_error=0
+for pattern in ${list_filespatterns_sorted[*]} ; do
+	file=`echo ${pathfiletemplate} | sed -e "s#%var#${pattern}#g"`
+	case `${listcommand} ${file} 2>/dev/null | wc -l | sed -e "s/ //g"` in
+	0)
+		PRINT "monitoring01 error: File not found : ${listcommand} ${file}"
+	 	file_error=1
+		;;
+	*)
+		list_files="${list_files} `${listcommand} ${file} 2>/dev/null`"
+		PRINT "monitoring01 mesg : File(s) to use :"
+		PRINT "`${listcommand} -1 ${file}`"
+		;;
+	esac
+done
+if [ ${file_error} -eq 1 ] ; then
+	#return 1
+	PRINT "monitoring01 error: All variables will not be available. Please check error message(s) above !!"
+fi
+
+if [ ${listfilespatternsused} -eq 1 ] ; then 
+	echo ${list_filespatterns_sorted[*]}
+	return 0	
+fi
+
+if [ ${listfilesused} -eq 1 ] ; then
+	echo ${list_files}
+	# Same as above
+	return 0	
+fi
+
+#=========================================
+if [ ! -d ${outputdir} ] ; then
+	mkdir -p ${outputdir}/files
+	mkdir -p ${outputdir}/images
+	mkdir -p ${outputdir}/progress
+fi
+if [ ! -d ${outputdir}/files ] ; then
+	mkdir -p ${outputdir}/files
+fi
+if [ ! -d ${outputdir}/images ] ; then
+	mkdir -p ${outputdir}/images
+fi
+if [ ! -d ${outputdir}/progress ] ; then
+	mkdir -p ${outputdir}/progress
+fi
+
+#=========================================
+i=0
+PRINT "monitoring01 mesg : ################################################"
+while [ $i -lt ${#list_varname[*]} ] ; do
+
+	#----------------------------------
+	PRINT "monitoring01 mesg : ================================================"
+	varname=${list_varname[$i]}
+	PRINT "monitoring01 mesg : Field to calculate : ${varname}"
+	
+	#----------------------------------
+	pattern1=`echo ${list_filespatterns[$i]} | cut -d " " -f 1`
+	set -A list_files `echo ${pathfiletemplate} | sed -e "s#%var#${pattern1}#g"`
+	PRINT "monitoring01 mesg : file(s) partionned following ${list_files[*]}"
+
+	#----------------------------------
+	varfilesadditional=${list_filesadditional[$i]}
+	varoperations=${list_varoperations[$i]}
+	vartitle=${list_vartitle[$i]}
+	varunits=${list_varunits[$i]}
+	varcalcularea=${list_calcularea[$i]}
+	varfileout=${outputdir}/files/${prefix}_${varname}_ave.nc
+
+	#----------------------------------
+	file_part=1
+	for file in ${list_files[*]} ; do 
+		PRINT "monitoring01 mesg : ------------------------------------------------" 
+		PRINT "monitoring01 mesg : part $file_part of ${#list_files[*]}"
+		file_template=`echo $file | sed -e "s#${pattern1}#%var#g"`
+		varfilein=""
+		npattern=1
+		for pattern in ${list_filespatterns[$i]} ; do
+			file_atpattern=`echo ${file_template} | sed -e "s#%var#${pattern}#g"` 
+			if [ ${npattern} -eq 1 ] ; then
+				varfilein="`ls ${file_atpattern} 2>/dev/null`"
+			else
+				varfilein="${varfilein} `ls ${file_atpattern} 2>/dev/null`"
+			fi
+			let npattern=npattern+1
+		done
+
+	        #----------------------------------
+		if [ X${varfilesadditional} != X ] ; then
+			varfilein="${varfilein} ${varfilesadditional}"
+		fi
+	
+		#----------------------------------
+		rm -rf monitoring01_script_filestopen_$$.jnl
+		for filetoopen in ${varfilein[*]} ; do
+			echo "use \"$filetoopen\"" >> monitoring01_script_filestopen_$$.jnl 	
+		done
+		PRINT "monitoring01 mesg : cat monitoring01_script_filestopen_$$.jnl"
+		if [ $quiet -ne 1 ] ; then 
+			cat monitoring01_script_filestopen_$$.jnl
+		fi
+	
+	        #----------------------------------
+		file_part_str=`printf "%03i" $file_part`
+		varfileoutpart=${varfileout}_part${file_part_str}.nc
+	
+		#----------------------------------
+		PRINT "monitoring01 mesg : ferret -nojnl -script monitoring01_create_average.jnl '\"monitoring01_script_filestopen_$$.jnl\" \"${varname}\" \"${varoperations}\" \"${varcalcularea}\" \"${vartitle}\" \"${varunits}\" \"${varfileoutpart}\" \"${time}\"'" 
+		eval ferret -nojnl -script monitoring01_create_average.jnl \'\"monitoring01_script_filestopen_$$.jnl\" \"${varname}\" \"${varoperations}\" \"${varcalcularea}\" \"${vartitle}\" \"${varunits}\"  \"${varfileoutpart}\" \"${time}\"\' > /dev/null 2>&1
+	
+		#----------------------------------
+		# Clean temporary script to open files
+		rm -rf monitoring01_script_filestopen_$$.jnl
+
+		#----------------------------------
+		if [ ! -f ${varfileoutpart} ] ; then
+			PRINT "monitoring01 error: Check input files and/or operations made on variables"
+			processncrcat=0
+			break	
+		else
+			PRINT "monitoring01 mesg : File created : ${varfileoutpart} "
+			processncrcat=1
+		fi
+
+		#----------------------------------
+		let file_part=file_part+1
+
+	done
+
+	#----------------------------------
+	if [ ${processncrcat} -eq 1 ] ; then
+		PRINT "monitoring01 mesg : ncrcat -Oh ${varfileout}_part*.nc ${varfileout}"
+		ncrcat -Oh ${varfileout}_part*.nc ${varfileout}
+
+		#----------------------------------
+		if [ ! -f ${varfileout} ] ; then
+			PRINT "monitoring01 error: ncrcat did not succeed"
+		else
+			PRINT "monitoring01 mesg : File created : ${varfileout} "
+			rm -rf ${varfileout}_part*.nc
+		fi
+	fi
+
+	#----------------------------------
+	let i=i+1
+done
+
+#=========================================
+PRINT "monitoring01 mesg : ################################################"
+i=0
+while [ $i -lt ${#list_varname[*]} ] ; do
+
+	#----------------------------------
+	PRINT "monitoring01 mesg : ================================================"
+	varname=${list_varname[$i]}
+	PRINT "monitoring01 mesg : Field to plot : ${varname}"
+	
+	#----------------------------------
+	# Clean up gif and jpg images
+	rm -rf ${outputdir}/images/${prefix}_${varname}.*
+
+	varfilein=${outputdir}/files/${prefix}_${varname}_ave.nc
+	varfileout=${outputdir}/images/${prefix}_${varname}.gif
+	PRINT "monitoring01 mesg : ferret -batch ${varfileout} -script monitoring01_create_plot.jnl '\"${varfilein}\" \"${varname}\" \"${smooth}\"'" 
+	eval ferret -batch ${varfileout} -script monitoring01_create_plot.jnl \'\"${varfilein}\" \"${varname}\" \"${smooth}\"\' > /dev/null 2>&1
+
+	#----------------------------------
+	let i=i+1
+
+done
+
+#=========================================
+for file in `ls ${outputdir}/images/${prefix}_*.gif 2>/dev/null` ; do
+	if [[ -f ${file} && -s ${file} ]] ; then
+		convert -geometry 50%x50% -bordercolor "#${color}" -border 15x15 ${file} ${file%.gif}.jpg 2>/dev/null
+	fi
+done
+
+#=========================================
+PRINT "monitoring01 mesg : ################################################"
+if [[ $cardanalysis -eq 1 ]] ; then 
+		# monitoring with card analysis
+		PRINT "monitoring01 mesg : monitoring01_createindex --card ${debugflag} -t "${text}" ${outputdir}"
+		monitoring01_createindex --card ${debugflag} -t "${text}" ${outputdir}
+		PRINT "monitoring01 mesg : card_analysis $carddir/config.card $carddir/run.card ${outputdir}"
+		card_analysis $carddir/config.card $carddir/run.card ${outputdir}
+else
+		# classic monitoring
+		PRINT "monitoring01 mesg : monitoring01_createindex ${debugflag} -t "${text}" ${outputdir}"
+		monitoring01_createindex ${debugflag} -t "${text}" ${outputdir}
+fi
+
+#=========================================
+# Monitoring exits successfully
+return 0

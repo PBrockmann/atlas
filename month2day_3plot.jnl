@@ -1,0 +1,60 @@
+!**************************************************************
+! Author: Rachid Benshila
+! Contact: rbipsl@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:35 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+let me_var1=$1
+let me_var2=$2
+let me_var3=$3
+def sym me_month=$4
+def sym me_annee=$5
+def sym me_qualifiers=$6%/line=1%
+
+
+
+!***************************************
+let me_month_length={31,28,31,30,31,30,31,31,30,31,30,31}
+
+if `($me_month) eq 1` then
+	def sym me_index_start=`1+17520*($me_annee)`
+else
+	def sym me_month2=`($me_month)-1`
+	def sym me_index_start=`me_month_length[i=1:($me_month2)@sum]*48+17520*($me_annee)`
+endif
+def sym me_index_end=`me_month_length[i=1:($me_month)@sum]*48+17520*($me_annee)`
+
+!***************************************
+let me_var_month1=me_var1[l=($me_index_start):($me_index_end)]
+let me_var_month2=me_var2[l=($me_index_start):($me_index_end)]
+let me_var_month3=me_var3[l=($me_index_start):($me_index_end)]
+
+!***************************************
+def axis/T=1:48:1/modulo my_day_index
+let me_day_01=me_var_month1[GL=my_day_index@MOD]
+let me_day_02=me_var_month2[GL=my_day_index@MOD]
+let me_day_03=me_var_month3[GL=my_day_index@MOD]
+
+def axis/t=0:23.5:0.5/units="hours" my_day
+let me_day_11=me_day_01[GT=my_day@ASN]
+let me_day_12=me_day_02[GT=my_day@ASN]
+let me_day_13=me_day_03[GT=my_day@ASN]
+
+set variable/title="climatological day for `obs,return=title` during month ($me_month)"/units="`obs,return=unit`" me_day_11 
+
+go 3winsize.jnl me_day_11 me_day_12 me_day_13
+
+plot/set_up/grat=(dash,color=black)/vlimit=`min`:`max` me_day_11
+go unlabels 1 8 
+ppl plot
+plot/nolab/over me_day_12
+plot/nolab/over me_day_13
+
+!***************************************
+cancel symbol ME* 
+cancel var ME* 

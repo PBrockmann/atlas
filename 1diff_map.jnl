@@ -1,0 +1,68 @@
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:34 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.10 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+def sym title=$1
+def sym file1=$2
+def sym variable1=$3
+def sym file2=$4
+def sym variable2=$5
+def sym qualifiersdiff=$6%/pal=grads/lev=20%
+def sym method=$7%fill% 
+ppl set units $8% %
+
+def sym viewlimits=[x=0:450,y=-90:90]
+
+!************************************************************
+let variable1=($variable1)
+go symbol_basename_and_define basefile1 "($file1)"
+let variable2=($variable2)
+go symbol_basename_and_define basefile2 "($file2)"
+
+
+use "($file1)"
+def grid/x=variable1/y=variable1 gridvar1
+use "($file2)"
+def grid/x=variable2/y=variable2 gridvar2
+
+def sym var1_size=`variable1[d=($basefile1)],return=size`
+def sym var2_size=`variable2[d=($basefile2)],return=size`
+if `($var1_size) gt ($var2_size)` then
+	let variable2_regridded=variable2[g=gridvar1,d=($basefile2)]
+	let diff=variable1[d=($basefile1)]-variable2_regridded
+else
+	let variable1_regridded=variable1[g=gridvar2,d=($basefile1)]
+	let diff=variable1_regridded-variable2[d=($basefile2)]
+endif
+
+go page_new -li 1 1 
+
+set v 1 
+
+! Control number of digits in figures in the keybar
+ppl shakey ,,,,4
+
+go margins_set 20 10 10 10
+($method)($qualifiersdiff)/title=" "/set_up diff($viewlimits)
+go unlabels 1 8
+ppl ($method)
+go cont_cylin 0 /over/nolab " " earth_continents
+
+go text_put 5 95 "@AS($title)" -1 0.3
+go text_put 5 92 "@ASDifference: ($basefile1) - ($basefile2)" -1 0.3
+go text_put 5 89 "@AS           ($variable1) - ($variable2)" -1 0.3
+go text_put 93 85 "@AS($units)" 0 0.3
+
+go text_stat3_put 5 85 diff -1 0.3
+

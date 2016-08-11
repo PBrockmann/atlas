@@ -1,0 +1,43 @@
+CANCEL DATA/ALL
+PPL SHASET RESET
+
+DEFINE SYMBOL resol     $1
+
+DEFINE SYMBOL QualiFill $2
+DEFINE SYMBOL VarFill   $3
+
+GO beau
+
+USE SE_grid_T.nc
+USE "($resol).0_Levitus.nc"
+
+GO orca_grid ($resol)
+
+!DEFINE AXIS/T=0.5:240.5/NPOINTS=240/EDGES       mois
+!DEFINE AXIS/T=0.5:12.5/MODULO/NPOINTS=12/EDGES  mois_clim
+
+LET sst_sea = sosstsst[D=1,G=gxyz@ASN,K=1]*m0[G=gxyz@ASN,K=1]
+LET sst_ami = votemper[D=2,G=gxyz@ASN,K=1]*m0[G=gxyz@ASN,K=1]
+
+go page_new -li 1 1 0 100 10 90
+
+set v 1
+go margins_set 10 10 10 10
+
+FILL/LINE/KEY/($QualiFill) ($VarFill)
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/HLIM=30:380:30/TITLE="($exper) - 2N/2S - Years 6/20"/LEV=(21,32,0.5) sst_sea[Y=-2:2@AVE,X=30:380]
+!FRAME/FILE="($exper)_eq_sai_($period).gif"
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/HLIM=30:380:30/TITLE="LEVITUS - 2N/2S"/LEV=(21,32,0.5) sst_ami[Y=-2:2@AVE,X=30:380]
+!FRAME/FILE="LEVITUS_eq_sai.gif"
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/HLIM=30:380:30/TITLE="($exper) - 2N/2S - Years 6/20"/LEV=(-3.5,3.5,0.5)/PAL=joussaume sst_sea[Y=-2:2@AVE,X=30:380] - sst_sea[Y=-2:2@AVE,L=@AVE,X=30:380]
+!FRAME/FILE="($exper)_eq_sai_ano_($period).gif"
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/HLIM=30:380:30/TITLE="LEVITUS - 2N/2S"/LEV=(-3.5,3.5,0.5)/PAL=joussaume sst_ami[Y=-2:2@AVE,X=30:380] - sst_ami[Y=-2:2@AVE,L=@AVE,X=30:380]
+!FRAME/FILE="LEVITUS_eq_sai_ano.gif"

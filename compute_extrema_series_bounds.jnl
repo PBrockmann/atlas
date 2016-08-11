@@ -1,0 +1,77 @@
+\cancel mode verify
+
+!**************************************************************
+! Description:
+!
+! Usage: go compute_extrema_series_bounds file_in.nc 1D_var file_out.nc bound_1 bound_2 offset 
+!
+! Example: 
+!     yes? go compute_extrema_series_bounds file_in.nc TSOL[i=@ave,j=@ave] file_out.nc 121 132 3
+!
+!     yes? go compute_extrema_series_bounds.jnl tyty.nc TSOL[i=@ave,j=@ave] toto.nc `1+12*0` `12+12*0` 
+!     yes? go compute_extrema_series_bounds.jnl tyty.nc TSOL[i=@ave,j=@ave] toto.nc `1+12*1` `12+12*1` 
+!     yes? go compute_extrema_series_bounds.jnl tyty.nc TSOL[i=@ave,j=@ave] toto.nc `1+12*2` `12+12*2`
+!
+! Calls:
+!
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:35 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+def sym ME_file_in=$1
+let ME_var_0=$2
+
+def sym ME_file_out=$3
+
+def sym ME_bound1=$4
+def sym ME_bound2=$5
+
+! offset to find extrema from April to April
+def sym ME_offset=$6%3%
+
+!*************************************************
+use "($ME_file_in)"
+
+def sym var_lend=`ME_var_0,return=lend`
+def axis/t=1:($var_lend):1 mytime
+
+let ME_var=ME_var_0[gt=mytime@ASN]
+
+let ME_var_min=ME_var[l=@min] 
+let ME_var_max=ME_var[l=@max]
+let ME_var_min_diff=ME_var-ME_var_min
+let ME_var_max_diff=ME_var-ME_var_max
+let var_min_selected_0=if ME_var_min_diff eq 0 then ME_var_min
+let var_max_selected_0=if ME_var_max_diff eq 0 then ME_var_max
+
+!let var_min_selected=var_min_selected_0[gt=mytime@ASN]
+!let var_max_selected=var_max_selected_0[gt=mytime@ASN]
+
+let var_min_selected=var_min_selected_0
+let var_max_selected=var_max_selected_0
+
+set variable/title="Minimum"/units=" " var_min_selected
+set variable/title="Maximum"/units=" " var_max_selected
+
+set region/l=`($ME_bound1)+($ME_offset)`:`($ME_bound2)+($ME_offset)`
+save/quiet/file="($ME_file_out)"/append var_min_selected, var_max_selected
+
+!list var_min_selected, var_min_selected
+
+!**************************************************************
+cancel data/all
+cancel region/all
+cancel axis mytime
+
+cancel sym ME_*
+cancel var var_min_selected*, var_max_selected*
+cancel var ME_*
+
+!**************************************************************
+set mode/last verify

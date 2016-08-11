@@ -1,0 +1,79 @@
+
+#**************************************************************
+# Author: Patrick Brockmann
+# Contact: Patrick.Brockmann@cea.fr
+# $Date: 2009/05/14 15:09:35 $
+# $Name: ATLAS_608_1_5 $
+# $Revision: 1.1.1.6 $
+# History:
+# Modification:
+#
+#**************************************************************
+
+# --------------------------------------------
+#PBS -N ATLAS
+#PBS -j o                    # regroupement des stdout et stderr
+#PBS -S /bin/ksh             # shell de soumission
+#PBS -l memsz_job=1gb        # Limite memoire a 3 Go
+#PBS -l cputim_job=1:00:00   # Limite temps a 1 heures
+#PBS -q scalaire
+
+# --------------------------------------------
+set -x
+
+# --------------------------------------------
+. /home/p86broc/.atlas_env_mercure_ksh
+
+#---------------------------------------------
+date_start=`date`
+
+# --------------------------------------------
+cd $TMPDIR
+
+# --------------------------------------------
+# Insert your commands between III...III lines and
+# precise produced directories to save
+# IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+
+descriptor_create ...
+nco operators ...
+
+atlas -o dir1 -l ... 
+atlas -o dir2 -l ...
+
+directories_produced="dir1 dir2"
+
+
+# IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+
+# --------------------------------------------
+for directory in $directories_produced ; do
+    rm -rf $SCRATCHDIR/$directory
+    cp -pR $directory $SCRATCHDIR
+done
+
+#---------------------------------------------
+# mail
+cat << END_MAIL > job_atlas.mail
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+Dear $USER,
+
+Your atlas job is finished on supercomputer MERCURE 
+at CEA/CCRT center.
+
+The output files are available on mercure.ccc.cea.fr at:
+$SCRATCHDIR
+
+Job started: $date_start
+Job ended  : `date`
+
+Thank you for reporting any problem to
+mailto:Patrick.Brockmann@cea.fr
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+END_MAIL
+
+mailx -s "[ATLAS] MERCURE job" $USER < job_atlas.mail
+

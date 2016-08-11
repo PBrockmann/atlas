@@ -1,0 +1,48 @@
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:34 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+def sym file=$1
+def sym model=$2
+def sym variable1=$3
+def sym qualifiers=/title=""$4% %
+def sym polygonfile=$5%earth_continents%
+
+def sym arg6=$6%none%
+if ($arg6%|none>false|*>true|%) then
+    def sym cmdgridortho2v=go cont_ortho_2v 0 -90 /over 10 graticule_$6
+else
+    def sym cmdgridortho2v=go null_command
+endif
+
+
+!************************************************************
+let variable1=($variable1)
+
+use "($file)"
+go symbol_basename_and_define basefile "($file)"
+
+go page_new -i 1 1 0 100 0 90
+
+set v 1
+go map_ortho_2v ($model) 0 -90 variable1 10 ($qualifiers) ($polygonfile)
+($cmdgridortho2v)
+
+go logo_put ipsl
+
+go textlayer_new
+go textlayer_text_put 5 98 "@AS($basefile)" -1 0.35
+go textlayer_text_put 5 95 "@AS($variable1)" -1 0.35
+go textlayer_stat_put 10 90 variable1 -1 0.25
+

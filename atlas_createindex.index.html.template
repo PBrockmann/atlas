@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<!########################################>
+<!# Author: Patrick Brockmann >
+<!# Contact: Patrick.Brockmann@cea.fr >
+<!# $Date: 2009/05/14 15:09:34 $ >
+<!# $Name: ATLAS_608_1_5 $ >
+<!# $Revision: 1.1.1.5 $ >
+<!# History: >
+<!# Modification: >
+<!########################################>
+
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>XXXXXX</title>
+
+<script type="text/javascript" src="html/tabber.js"></script>
+<link rel="stylesheet" href="html/tabber.css" TYPE="text/css" MEDIA="screen">
+<link rel="stylesheet" href="html/tabber-print.css" TYPE="text/css" MEDIA="print">
+
+<script type="text/javascript">
+document.write('<style type="text/css">.tabber{display:none;}<\/style>');
+</script>
+
+<script type="text/javascript">
+function basename (path, suffix) {
+    // http://kevin.vanzonneveld.net
+    // +   original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+    // +   improved by: Ash Searle (http://hexmen.com/blog/)
+    // +   improved by: Lincoln Ramsay
+    // +   improved by: djmix
+    // *     example 1: basename('/www/site/home.htm', '.htm');
+    // *     returns 1: 'home'
+
+    var b = path.replace(/^.*[\/\\]/g, '');
+
+    if (typeof(suffix) == 'string' && b.substr(b.length-suffix.length) == suffix) {
+        b = b.substr(0, b.length-suffix.length);
+    }
+
+    return b;
+}
+function popimage(img) {
+        w=open('',img,'width=800,height=600,toolbar=no,scrollbars=no,resizable=no');
+        w.document.write("<html lang='en'>\n");
+        w.document.write("<head>\n");
+        title=basename(img, '');
+        w.document.write("<title>"+title+"</title>\n");
+        w.document.write("<script type='text/javascript'>\n");
+        w.document.write("\tfunction checksize() {\n\t\tif (document.images[0].complete) {\n\t\t\twindow.resizeTo(document.images[0].width,document.images[0].height+60);\n\t\t\twindow.focus();\n\t\t\t}\n\t\telse {\n\t\t\tsettimeout('checksize()',250)\n\t\t\t}\n\t}\n\t");
+        w.document.write("<"+"/script>\n");
+        w.document.write("</head>\n\n");
+        w.document.write("<body onload='checksize()' topmargin=0 leftmargin=0 marginwidth=0 marginheight=0>\n");
+        w.document.write("<img src='"+img+"' border='0'/>\n");
+        w.document.write("</body>\n");
+        w.document.write("</html>\n");
+        w.document.close();
+}
+</script>
+
+</head>
+<body>
+<font face="Arial,Helvetica">
+
+<h1>XXXXXX</h1>
+
+<!=====================================>
+<div class="tabber">
+
+<!=====================================>
+     <div class="tabbertab" style="page-break-after:always">
+	  <h2>ATM component</h2>
+AAAAAA
+  </div>
+
+
+<!=====================================>
+     <div class="tabbertab" style="page-break-after:always">
+	  <h2>ICE component</h2>
+IIIIII
+  </div>
+
+<!=====================================>
+     <div class="tabbertab" style="page-break-after:always">
+	  <h2>OCE component</h2>
+OOOOOO
+  </div>
+
+<!=====================================>
+     <div class="tabbertab" style="page-break-after:always">
+	  <h2>SRF component</h2>
+SSSSSS
+  </div>
+
+<!=====================================>
+     <div class="tabbertab" style="page-break-after:always">
+	  <h2>About</h2>
+	  <p>This atlas index has been produced by UUUUUU<br>
+	  from HHHHHH at TTTTTT</p>
+          <p>Tagname: $Name: $<br>
+          More informations: <a target="_blank" href="http://wiki.ipsl.jussieu.fr/IGCMG/ferret/Atlas">http://wiki.ipsl.jussieu.fr/IGCMG/ferret/Atlas</a></p>
+          Notes:
+          <ul>
+             <li>When you click on image, a pop up window should appear.<br>
+                 If not, in your browser preferences, enable Javascript and allow script<br>
+                 to resize existing windows.<BR>
+             <li>To stop an animated gif image, just hit the ESC key on your keyboard.<br>
+                 In order to replay the animation, you'll have to reload the page by pressing F5 or Ctrl+R.<BR>
+          </ul>
+
+     </div>
+
+<!=====================================>
+</div>
+
+</font>
+</body>
+</html>

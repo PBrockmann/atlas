@@ -1,0 +1,71 @@
+\cancel mode verify 
+
+!**************************************************************
+! Description:
+!
+! Usage: 
+!
+! Example: 
+!
+! Notes:
+!
+! Calls:
+!
+! Author: Olivier Marti
+! Contact: Olivier.Marti@cea.fr
+! $Date: 2009/05/14 15:09:34 $ 
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.1 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+SET MEMORY/SIZE=20
+
+!************************************************************
+DEFINE SYMBOL title=$1
+DEFINE SYMBOL file1=$2
+DEFINE SYMBOL variable1=$3
+DEFINE SYMBOL file2=$4
+DEFINE SYMBOL myqualifiers=/NOLAB/PAL=fast_002_rev.spk/TITLE="($title)"$5% %
+
+DEFINE SYMBOL me_side 10 15
+LET depth_share = `1000.0`
+LET view_share = `0.3` ! Coupure au milieu : view_share = `0.45`
+
+LET variable1 = ($variable1)
+
+USE "($file1)"
+GO symbol_basename_and_define basefile1 "($file1)"
+USE "($file2)"
+GO symbol_basename_and_define basefile2 "($file2)"
+
+
+GO page_new -il 1 1 ! Pour definir le ratio de la fenetre
+
+DEFINE VIEWPORT/X=0:0.9/Y=`view_share`:0.9  v1 
+DEFINE VIEWPORT/X=0:0.9/Y=0.0:`view_share`  v2
+DEFINE VIEWPORT/X=0.9:0.97/Y=0.1:0.8 colorbar
+
+!!!!LET varref = ($variable1)[D=($basefile2),GT=($variable1)[D=($basefile1)]@ASN,GY=($variable1)[D=($basefile1)]@ASN]
+!!!! previous line not working on ulam. MAF. 24/05/2011
+LET varref = ($variable1)[D=2,GT=($variable1)[D=1]@ASN,GY=($variable1)[D=1]@ASN]
+
+SET VIEW v1 ; GO margins_set  30 0  ($me_side)
+FILL/LINE/HLIM=-90:90:15/VLIM=0:`depth_share+1`:100/AXES=(1,0,1,1)/NOKEY($myqualifiers)   ($variable1)[L=@AVE,D=($basefile1)]-varref[L=@AVE]
+GO vgridlines  `depth_share` /DASH=(0.05,0.2,0.05,0.2)
+
+SET VIEW v2 ; GO margins_set  0  15 ($me_side)
+FILL/LINE/HLIM=-90:90:15/VLIM=`depth_share`:4600:500/AXES=(0,1,1,1)/NOKEY($myqualifiers)  ($variable1)[L=@AVE,D=($basefile1)]-varref[L=@AVE]
+
+SET VIEW colorbar
+GO colorbar_put 0 30 0 100 0.5 ($myqualifiers) 1
+
+GO logo_put ipsl
+
+GO textlayer_new
+GO textlayer_text_put 5 95 "@AS($title)"                   -1 0.5
+GO textlayer_text_put 5 91 "@AS($basefile1): ($variable1)" -1 0.35
+GO textlayer_text_put 5 87 "@AS(Difference with Levitus)"  -1 0.35
+

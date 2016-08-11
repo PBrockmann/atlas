@@ -1,0 +1,207 @@
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@cea.fr
+! $Date: $
+! $Name: $
+! $Revision: $
+! History:
+! Modification:
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+def sym title=($01)
+def sym file1=($02)
+def sym variable1=($03)
+def sym file2=($04)
+def sym variable2=($05)
+def sym qualifiers=/nokey/hlim=-90:90:15/nolab/title=""($06%/pal=default%)
+def sym qualifiersdiff=/nokey/hlim=-90:90:15/nolab/title=""($07%/pal=fast_002_rev.spk%)
+def sym method=($08%fill%)
+def sym vmin=($09%0.1%) 
+def sym vmax=($10%1000%) 
+
+!************************************************************
+let variable1=($variable1)
+let variable2=($variable2)
+
+go page_new -i 2 3 0 100 0 90
+
+!------------------------
+use "($file1)"
+go symbol_basename_and_define basefile1 "($file1)"
+def sym variable1_lstart=`variable1,return=lstart`
+def sym variable1_lend=`variable1,return=lend`
+if `($variable1_lstart) ne ($variable1_lend)` then
+   say "Variable1 must have a time dimension equals to 1"
+   exit
+endif
+if `($variable1_lstart) eq 0 ` then
+   let pressure1=pres[l=1:12@ave,d=($basefile1)]/100
+else
+   let pressure1=pres[l=($variable1_lstart),d=($basefile1)]/100
+endif
+
+def sym variable1_ksize=`variable1,return=ksize`
+if `($variable1_ksize) eq 39` then
+	! LMDZ 39 levels set to 50 levels from ECMWF
+	def sym pressurelevelsfile=ECMWF50_stdpressurelevels.nc
+	use ($pressurelevelsfile)
+	let variable1z = ZAXREPLACE(variable1[d=1],pressure1[d=1],Z[GZ=ECMWF50_LEVELS])
+	!define axis/from_data/z/depth/units="mb"/edges myzlog=log(ZBOXLO[GZ=ECMWF50_LEVELS])
+	let myzaxislo_0=ZBOXLO[GZ=ECMWF50_LEVELS]
+	let myzaxislo=if myzaxislo_0 eq 0 then 0.05 else myzaxislo_0	! to handle 0 with log axis 
+	define axis/from_data/z/depth/units="mb"/edges myzlog=log(myzaxislo)
+elif `($variable1_ksize) eq 19` then
+	! LMDZ 19 levels set to 17 levels 
+	def sym pressurelevelsfile=LMDZ_stdpressurelevels.nc
+	use ($pressurelevelsfile)
+	let variable1z = ZAXREPLACE(variable1[d=1],pressure1[d=1],Z[GZ=LMDZ_stdpressurelevels])
+	define axis/from_data/z/depth/units="mb"/edges myzlog=log(ZBOXLO[GZ=LMDZ_stdpressurelevels])
+else
+	exit
+endif
+
+let variable1z_log=variable1z[gz=myzlog@asn]
+
+!------------------------
+set v 1
+go margins_set 20 10 12 10 
+($method)($qualifiers)/vlim=($vmin):($vmax) variable1z[i=@ave]
+go text_put 2 95 "@AS($basefile1)" -1 0.35
+go text_put 5 90 "@AS($variable1)" -1 0.35
+go text_stat2_put 100 85 variable1z[i=@ave] 0 0.25 
+
+!------------------------
+set v 2 
+go margins_set 20 10 10 12 
+($method)($qualifiers)/axes=(1,1,0,0)/vlim=`log(($vmin))`:`log(($vmax))` variable1z_log[i=@ave]
+
+!------------------------
+
+def view/xlim=0.5,1./ylim=0.6,0.9/text=0.39 label2
+set v label2
+go margins_set 20 10 10 12 
+
+!~~~~~~
+! bug with right log tics referenced as err630_plotlog.jnl
+!plot/set/nolab/vlog/axes=(0,0,1,1)/vlim=($vmin):($vmax) z[g=variable1z]*0-1E34
+!ppl axlabp -1,1	! set vertical labels to right
+!ppl plot
+!ppl axlabp -1,-1 	! return to default
+plot/set/nolab/axes=(0,0,1,1)/hlim=-90:90/vlim=`log(($vmin))`:`log(($vmax))` z[g=variable1z]*0-1E34
+ppl axlabp -1,0		! remove labels 
+ppl tics 0,0,0,0	! set tics at 0 size
+ppl plot
+ppl axlabp -1,-1 	! return to default
+ppl tics .125,.25,.125,.25
+go put_loglabels.jnl ($vmin) ($vmax) ! put labels 
+!~~~~~~
+
+!------------------------
+def view/xlim=0.45,0.55/ylim=0.6,0.9/text=0.39 colorbar1
+set v colorbar1
+go colorbar_put 30 50 10 80 0.2 ($qualifiers)
+
+!------------------------
+def grid/x=variable1z/y=variable1z/z=variable1z gridvar1
+show grid gridvar1
+
+!------------------------
+set v 3 
+use "($file2)"
+go symbol_basename_and_define basefile2 "($file2)"
+
+let variable2z=variable2[g=gridvar1]
+
+go margins_set 20 10 12 10 
+($method)($qualifiers)/vlim=($vmin):($vmax) variable2z[i=@ave]
+go text_put 2 95 "@AS($basefile2)" -1 0.35
+go text_put 5 90 "@AS($variable2)" -1 0.35
+go text_stat2_put 100 85 variable2[i=@ave] 0 0.25 
+
+!------------------------
+def view/xlim=0.45,0.55/ylim=0.3,0.6/text=0.39 colorbar2
+set v colorbar2
+go colorbar_put 30 50 10 80 0.2 ($qualifiers)
+
+!------------------------
+set v 4 
+
+go margins_set 20 10 10 12 
+let variable2z_log=variable2z[gz=myzlog@asn]
+($method)($qualifiers)/axes=(1,1,0,0)/vlim=`log(($vmin))`:`log(($vmax))` variable2z_log[i=@ave]
+
+!------------------------
+def view/xlim=0.5,1./ylim=0.3,0.6/text=0.39 label4
+set v label4
+go margins_set 20 10 10 12 
+
+!~~~~~~
+! bug with right log tics referenced as err630_plotlog.jnl
+!plot/set/nolab/vlog/axes=(0,0,1,1)/vlim=($vmin):($vmax) z[g=variable1z]*0-1E34
+!ppl axlabp -1,1	! set vertical labels to right
+!ppl plot
+!ppl axlabp -1,-1 	! return to default
+plot/set/nolab/axes=(0,0,1,1)/hlim=-90:90/vlim=`log(($vmin))`:`log(($vmax))` z[g=variable1z]*0-1E34
+ppl axlabp -1,0		! remove labels 
+ppl tics 0,0,0,0	! set tics at 0 size
+ppl plot
+ppl axlabp -1,-1 	! return to default
+ppl tics .125,.25,.125,.25
+go put_loglabels.jnl ($vmin) ($vmax) ! put labels 
+!~~~~~~
+
+!------------------------
+set v 5 
+let diff=variable1z[d=($basefile1)]-variable2z[d=($basefile2)]
+go margins_set 20 10 12 10 
+($method)($qualifiersdiff)/vlim=($vmin):($vmax) diff[i=@ave]
+go text_put 2 95 "@ASDifference" -1 0.35
+go text_put 5 90 "@AS($variable1) - ($variable2)" -1 0.35
+go text_stat2_put 100 85 diff[i=@ave] 0 0.25 
+
+!------------------------
+def view/xlim=0.45,0.55/ylim=0.,0.3/text=0.39 colorbar3
+set v colorbar3
+go colorbar_put 30 50 10 80 0.2 ($qualifiersdiff)
+
+!------------------------
+set v 6 
+let diff=variable1z_log[d=($basefile1)]-variable2z_log[d=($basefile2)]
+go margins_set 20 10 10 12 
+($method)($qualifiersdiff)/axes=(1,1,0,0)/vlim=`log(($vmin))`:`log(($vmax))` diff[i=@ave]
+
+!------------------------
+def view/xlim=0.5,1./ylim=0.0,0.3/text=0.39 label6
+set v label6
+go margins_set 20 10 10 12 
+
+!~~~~~~
+! bug with right log tics referenced as err630_plotlog.jnl
+!plot/set/nolab/vlog/axes=(0,0,1,1)/vlim=($vmin):($vmax) z[g=variable1z]*0-1E34
+!ppl axlabp -1,1	! set vertical labels to right
+!ppl plot
+!ppl axlabp -1,-1 	! return to default
+plot/set/nolab/axes=(0,0,1,1)/hlim=-90:90/vlim=`log(($vmin))`:`log(($vmax))` z[g=variable1z]*0-1E34
+ppl axlabp -1,0		! remove labels 
+ppl tics 0,0,0,0	! set tics at 0 size
+ppl plot
+ppl axlabp -1,-1 	! return to default
+ppl tics .125,.25,.125,.25
+go put_loglabels.jnl ($vmin) ($vmax) ! put labels 
+!~~~~~~
+
+!------------------------
+go logo_put ipsl
+
+go textlayer_new
+go textlayer_text_put 2 95 "@AS($title)" -1 0.37
+
+!------------------------
+cancel data/all
+cancel var/all
+

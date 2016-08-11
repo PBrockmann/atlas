@@ -1,0 +1,86 @@
+
+!**************************************************************
+! Author: Sebastien Denvil
+! Contact: sebastien.denvil@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:35 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification: En attente de reglement de pb
+!               sur err551_XAXIS_1.jnl
+!
+!**************************************************************
+
+set memory/size=60
+
+!************************************************************
+def sym file=$1
+def sym var=$2
+def sym qualifiers_plot=$3
+def sym deltav=$4%2%
+def sym smoothbox=$5%10%
+def sym qualifiers_shade=$6
+def sym resol=$7
+
+def sym file_ref=($8%XXXXX%)
+def sym var_ref=($9%XXXXX%)
+
+!************************************************************
+
+use "ORCA($resol).0_grid.nc"
+use "($file)" 
+go symbol_basename_and_define basefile "($file)"
+
+go page_new -i 1 2 0 100 0 90
+
+let ME_var1=($var)
+def sym ME_var1_dim_t=`ME_var1,return=lend`
+if `($ME_var1_dim_t) gt 1` then
+
+        set v 1 
+        go margins_set 15 20 10 10
+	plot/set_up/nolab/grat=(dash,color=black)/line=1($qualifiers_plot) ME_var1[i=@ave,j=@ave]
+        go unlabels 1 6
+        ppl plot
+	plot/set_up/nolab/over/line=2($qualifiers_plot) ME_var1[i=@ave,j=@ave,l=@sbx:($smoothbox)]
+        go unlabels 1 6
+        ppl plot/over
+        ppl pen 1,1 
+        go text_put 5 90 "@ASGlobal average" -1 0.35
+        go text_legend_put 15 25 10 " Original" 1
+        go text_legend_put 15 25 7 " Smoothed by ($smoothbox)" 2
+
+        set v 2
+	if ($file_ref%|XXXXX>true|*>false|%) then
+		let ME_var2=($var)
+	else
+		use "($file_ref)" 
+		go symbol_basename_and_define basefile_ref "($file_ref)"
+		let ME_var1_0=ME_var1[d=($basefile)]
+		let ME_var2_0=($var_ref)
+		let ME_var2_1=ME_var2_0[d=($basefile_ref)]
+		let ME_var2=ME_var1_0-ME_var2_1
+	endif
+        go margins_set 15 20 10 10
+        shade/set_up/nolab($qualifiers_shade) ME_var2[i=@ave]
+        go unlabels 1 6 
+        ppl shade
+        go text_put 5 90 "@ASZonal average" -1 0.35
+
+        go logo_put ipsl 
+        
+        go textlayer_new
+        go textlayer_text_put 5 98 "@AS($basefile)" -1 0.35
+        go textlayer_text_put 5 95 "@AS($var)" -1 0.35
+
+else
+        set v full 
+        go viewport_box_put 5
+        go text_put 50 50 "Only one time step"
+        go logo_put ipsl 
+endif
+
+cancel data ($basefile)
+
+cancel var ME_*
+cancel symb ME_*

@@ -1,0 +1,133 @@
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:34 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.5 $
+! History:
+! Modification:
+!
+! Example: yes? go LMDZ_1difffrom2variables_logzonal.jnl "Ozone" /dmnfs/p24dimi/EXPER/NMHC_DC01_REF_CASE_EMANUEL/MM_NMHC_DC01.lmdz.histrac.an2003.m07_ref.nc (O3[l=1]*1.e9) /dmnfs/p24dimi/EXPER/NMHC_DC01_SHIPSM5%_EMANUEL/MM_NMHC_DC01.lmdz.histrac.an2003.m07.nc (O3[l=1]*1.e9) /lev=(-20.,20.,2.) fill PS 10 1000
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+def sym title=$1
+def sym file1=$2
+def sym variable1=$3
+def sym file2=$4
+def sym variable2=$5
+def sym myqualifiers=/nolab/pal=fast_002_rev.spk/title=""$6% %
+def sym mymethod=$7%fill% 
+def sym surface_pressure_name=$8%PSOL%
+def sym myvlim_min=($09%100%)                          ! Must be > 0 and power of 10
+def sym myvlim_max=($10%1000%)
+
+!************************************************************
+let variable1=($variable1)
+let variable2=($variable2)
+
+!===============================
+use "($file1)"
+go symbol_basename_and_define basefile1 "($file1)"
+def sym variable1_lstart=`variable1,return=lstart`
+def sym variable1_lend=`variable1,return=lend`
+if `($variable1_lstart) ne ($variable1_lend)` then 
+   say "Variable1 must have a time dimension equals to 1"  
+   exit 
+endif
+go LMDZ_define_pressure_variable pressure1 ($surface_pressure_name)[l=($variable1_lstart),d=($basefile1)]
+show var pressure1
+let variable1z = ZAXREPLACE(variable1[d=($basefile1)],pressure1,Z[GZ=LMDZ_stdpressurelevels])
+
+define axis/from_data/z/depth/units="mb" myzlog=log(Z[GZ=LMDZ_stdpressurelevels])
+let myvariable1z = variable1z[gz=myzlog@asn]
+
+!===============================
+use "($file2)"
+go symbol_basename_and_define basefile2 "($file2)"
+def sym variable2_lstart=`variable2,return=lstart`
+def sym variable2_lend=`variable2,return=lend`
+if `($variable2_lstart) ne ($variable2_lend)` then 
+   say "Variable2 must have a time dimension equals to 1"  
+   exit 
+endif
+go LMDZ_define_pressure_variable pressure2 ($surface_pressure_name)[l=($variable2_lstart),d=($basefile2)]
+show var pressure2
+let variable2z = ZAXREPLACE(variable2[d=($basefile2)],pressure2,Z[GZ=LMDZ_stdpressurelevels])
+
+define axis/from_data/z/depth/units="mb" myzlog=log(Z[GZ=LMDZ_stdpressurelevels])
+let myvariable2z = variable2z[gz=myzlog@asn]
+
+!===============================
+go page_new -i 1 1
+set v 1
+
+go margins_set 15 10 10 15 
+let diff=(myvariable2z[d=($basefile2)]-myvariable1z[d=($basefile1)])
+
+!------------------------
+! Control number of digits in figures in the keybar
+ppl shakey ,,,,4
+
+ppl tics ,,0,0
+ppl axlabp -1,0
+($mymethod)/set_up/hlim=-90:90/vlim=`log(($myvlim_min))`:`log(($myvlim_max))`($myqualifiers) diff[i=@ave]
+
+go unlabels 1 8 
+
+ppl ($mymethod)
+
+ppl window,off
+
+if `($myvlim_min) lt 0.1 and ($myvlim_max) ge 0.1` then
+   repeat/i=1:10:1 ( let myindice=i*1E-2 ; let myindicelog=log(myindice) ; \
+        ppl aline 1,-93,`myindicelog`,-90,`myindicelog` ; \
+        label -95,`myindicelog`,1,0,0.1,"`myindice`" ; \
+        ppl aline 1,90,`myindicelog`,93,`myindicelog` })
+endif
+if `($myvlim_min) lt 1 and ($myvlim_max) ge 1` then
+   repeat/i=1:10:1 ( let myindice=i*1E-1 ; let myindicelog=log(myindice) ; \
+        ppl aline 1,-93,`myindicelog`,-90,`myindicelog` ; \
+        label -95,`myindicelog`,1,0,0.1,"`myindice`" ; \
+        ppl aline 1,90,`myindicelog`,93,`myindicelog` })
+endif
+if `($myvlim_min) lt 10 and ($myvlim_max) ge 10` then
+   repeat/i=1:10:1 ( let myindice=i ; let myindicelog=log(myindice) ; \
+        ppl aline 1,-93,`myindicelog`,-90,`myindicelog` ; \
+        label -95,`myindicelog`,1,0,0.1,"`myindice`" ; \
+        ppl aline 1,90,`myindicelog`,93,`myindicelog` })
+endif
+if `($myvlim_min) lt 100 and ($myvlim_max) ge 100` then
+   repeat/i=1:10:1 ( let myindice=i*1E1 ; let myindicelog=log(myindice) ; \
+        ppl aline 1,-93,`myindicelog`,-90,`myindicelog` ; \
+        label -95,`myindicelog`,1,0,0.1,"`myindice`" ; \
+        ppl aline 1,90,`myindicelog`,93,`myindicelog` })
+endif
+if `($myvlim_min) le 1000 and ($myvlim_max) ge 1000` then
+   repeat/i=1:10:1 ( let myindice=i*1E2 ; let myindicelog=log(myindice) ; \
+        ppl aline 1,-93,`myindicelog`,-90,`myindicelog` ; \
+        label -95,`myindicelog`,1,0,0.1,"`myindice`" ; \
+        ppl aline 1,90,`myindicelog`,93,`myindicelog` })
+
+label -105,`log(($myvlim_min))+(log(($myvlim_max))-log(($myvlim_min)))/2`,0,90,0.12,"HEIGHT (mb)"
+
+! Return to default values
+ppl window,on
+ppl tics .125,.25,.125,.25
+ppl axlabp -1,-1
+
+!------------------------
+endif
+
+go text_put 5 90 "@ASDifference: ($variable2) - ($variable1)" -1 0.35
+go text_stat2_put 50 5 diff[i=@ave] 0 
+
+go logo_put ipsl
+
+go textlayer_new
+go textlayer_text_put 5 95 "@AS($title)" -1 0.5
+

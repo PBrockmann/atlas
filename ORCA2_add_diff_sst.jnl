@@ -1,0 +1,85 @@
+CANCEL DATA/ALL
+PPL SHASET RESET
+
+DEFINE SYMBOL resol     $1
+
+DEFINE SYMBOL QualiFill $2
+DEFINE SYMBOL VarFill   $3
+
+GO beau
+
+USE SE_grid_T.nc
+USE ($resol).0_Levitus.nc
+
+GO orca_grid ($resol)
+
+DEFINE AXIS/T=0.5:240.5/NPOINTS=240/EDGES       mois
+DEFINE AXIS/T=0.5:12.5/MODULO/NPOINTS=12/EDGES  mois_clim
+
+DEFINE SYMBOL lrange 1:240
+LET sst1 =  votemper[GT=mois@ASN,D=1,k=1]
+LET/TITLE="($exper) SST"/UNIT="degrees_celcius"               sst_cpl      = sst1[L=($lrange)]
+LET sst2 =  votemper[D=2,k=1,GT=mois_clim@ASN]
+LET/TITLE="LEVITUS SST"/UNIT="degrees_celcius"                sst_ami      = sst2*mb[G=OpT@ASN]
+LET/TITLE="($exper) SST"/UNIT="degrees_celcius"               sst_cpl_cli  = sst_cpl[GT=mois_clim@MOD]
+LET/TITLE="SST ($exper) minus LEVITUS"/UNIT="degrees_celcius" sst_diff     = sst_cpl - sst_ami
+LET/TITLE="SST ($exper) minus LEVITUS"/UNIT="degrees_celcius" sst_diff_cli = sst_cpl_cli - sst_ami
+
+go page_new -li 1 1 0 100 10 90
+
+set v 1
+go margins_set 10 10 10 10
+
+FILL/LINE/KEY/J=1:`jpojm1`/($QualiFill) ($VarFill)
+GO fland
+
+!PPL SHASET RESET
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/TITLE="SST LEVITUS - Annual mean"/LEV=(-2,32,1)/LINE/KEY/J=1:`jpojm1` sst_ami[L=@AVE], lon_, lat_
+!GO fland
+!FRAME/FORMAT=gif/FILE=LEVITUS.gif
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/TITLE="SST LEVITUS, DJF"/LEV=(-2,32,1)/LINE/KEY/J=1:`jpojm1` sst_ami[L=12:14@AVE], lon_, lat_
+!GO fland
+!FRAME/FORMAT=gif/FILE=LEVITUS-DJF.gif
+
+!SET WINDOW/CLEAR ; SET VIEW FULL 
+!FILL/TITLE="SST LEVITUS, JJA"/LEV=(-2,32,1)/LINE/KEY/J=1:`jpojm1` sst_ami[L=6:8@AVE], lon_, lat_
+!GO fland
+!FRAME/FORMAT=gif/FILE=LEVITUS-JJA.gif
+
+! --
+
+!SET WINDOW/CLEAR ; SET VIEW FULL 
+!FILL/TITLE="SST ($exper) - Annual mean"/LEV=(-2,32,1)/LINE/KEY/J=1:`jpojm1` sst_cpl_cli[L=@AVE], lon_, lat_
+!GO fland
+!FRAME/FORMAT=gif/FILE=($exper)-($period).gif
+
+!SET WINDOW/CLEAR ; SET VIEW FULL 
+!FILL/TITLE="SST ($exper), DJF"/LEV=(-2,32,1)/LINE/KEY/J=1:`jpojm1` sst_cpl_cli[L=12:14@AVE], lon_, lat_
+!GO fland
+!FRAME/FORMAT=gif/FILE=($exper)-DJF-($period).gif
+
+!SET WINDOW/CLEAR ; SET VIEW FULL 
+!FILL/TITLE="SST ($exper), JJA"/LEV=(-2,32,1)/LINE/KEY/J=1:`jpojm1` sst_cpl_cli[L=6:8@AVE], lon_, lat_
+!GO fland
+!FRAME/FORMAT=gif/FILE=($exper)-JJA-($period).gif
+
+! ---
+
+!SET WINDOW/CLEAR ; SET VIEW FULL 
+!FILL/TITLE="SST ($exper) - LEVITUS - Annual mean"/LEV=(-10,10,1)/LINE/KEY/J=1:`jpojm1`/PAL=white_joussaume sst_diff_cli[L=@AVE], lon_, lat_
+!GO fland
+!FRAME/FORMAT=gif/FILE=($exper)-LEVITUS-($period).gif
+
+!SET WINDOW/CLEAR ; SET VIEW FULL 
+!FILL/TITLE="SST ($exper) - LEVITUS, DJF"/LEV=(-10,10,1)/LINE/KEY/J=1:`jpojm1`/PAL=white_joussaume sst_diff_cli[L=12:14@AVE], lon_, lat_
+!GO fland
+!FRAME/FORMAT=gif/FILE=($exper)-LEVITUS-DJF-($period).gif
+
+!SET WINDOW/CLEAR ; SET VIEW FULL 
+!FILL/TITLE="SST ($exper) - LEVITUS, JJA"/LEV=(-10,10,1)/LINE/KEY/J=1:`jpojm1`/PAL=white_joussaume sst_diff_cli[L=6:8@AVE], lon_, lat_
+!GO fland
+!FRAME/FORMAT=gif/FILE=($exper)-LEVITUS-JJA-($period).gif

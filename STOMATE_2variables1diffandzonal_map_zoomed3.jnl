@@ -1,0 +1,134 @@
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2006/10/04 12:54:16 $
+! $Name: ATLAS_600_1_0 $
+! $Revision: 1.1.1.5 $
+! History:
+! Modification: New version for STOMATE since orchidee_1_9_4 (Martial Mancip)
+!               Ponderation with VEGET_MAX for inputfile (file1),
+!               and with VEGET_MAX et SPACE_NAT for reference file (file2) from OLD STOMATE (Martial Mancip).
+!**************************************************************
+SET MODE VERIFY: ALL
+set memory/size=20
+
+!************************************************************
+def sym thetitle=$1
+def sym file1=$2
+def sym variable1=$3
+def sym file2=$4
+def sym variable2=$5
+def sym qualifiers=/nolab/pal=grads/title=""$6% %
+def sym qualifiersdiff=/nolab/pal=grads/title=""$7% %
+def sym qualifiersplot=/nolab/transpose/color=1$8% %
+def sym qualifiersplotdiff=/nolab/transpose/color=1$9% %
+def sym sloop=$10
+def sym limits=($11%XXXXX%)
+
+def sym polygonfile1=earth_continents
+def sym polygonfile2=earth_continents
+def sym polygonfilediff=earth_continents
+
+!------------------------
+! calclimits is used to bypass the fact that
+! ferret will not computed the same result for complete domain
+! in expressions var[x=@ave,y=@ave] and var[x=0:450@ave,y=-90:90@ave]
+! Note that yes? list var[x=20:60@ave,y=30:60@ave] and
+!           yes? let var1=var[x=20:60,y=30:60]; list var1[x=@ave,y=@ave]
+! will not give the same result because the 2nd expression use for weight      
+! all the complete surface cells. On the contrary, the 1st expression compute
+! a weight considering cell splitting.
+!------------------------
+if ($limits%|XXXXX>true|*>false|%) then
+        def sym viewlimits=[x=0:450,y=-90:90]
+        ppl set calclimits
+else
+        def sym viewlimits=($limits)
+        def sym calclimits=($limits)
+endif
+!------------------------
+
+!************************************************************
+let variable1_=($variable1)
+let pvariable1=VEGET_MAX[D=1,K=2:13,l=($sloop)]*variable1_[l=($sloop)]
+let variable1=pvariable1[k=@sum]
+let variable1_view=variable1($viewlimits)
+let variable1_calc=variable1($calclimits)
+go symbol_basename_and_define basefile1 "($file1)"
+let variable2_=($variable2)
+let pvariable2=VEGET_MAX[D=2,l=($sloop)]*variable2_[l=($sloop)]
+let variable2=pvariable2[k=1:10@sum]*SPACE_NAT[D=2,l=($sloop)]+pvariable2[k=11:12@sum]*(1-SPACE_NAT[D=2,l=($sloop)])
+let variable2_view=variable2($viewlimits)
+let variable2_calc=variable2($calclimits)
+go symbol_basename_and_define basefile2 "($file2)"
+
+def sym method=fill
+
+go page_new -i 1 3 0 70 0 90 
+
+set v 1 
+use "($file1)"
+go margins_set 20 10 10 10
+($method)($qualifiers) variable1_view
+go cont_cylin 0 /over/nolab " " ($polygonfile1)
+go text_put 3 94 "@AS($basefile1): <NL> ($variable1)" -1 0.32
+go text_stat3_put 90 85 variable1_calc 1 0.25 
+
+def grid/x=variable1_/y=variable1_ gridvar1
+
+def view/xlim=0.7,1./ylim=0.6,0.9 4
+set v 4 
+go margins_set 20 10 10 10
+plot/set_up($qualifiersplot) variable1_calc[i=@ave]
+ppl tics ,($PPL$YLEN),,,1,
+ppl plot
+ppl tics .125,.25,.125,.25,-1,-1
+use "($file2)"
+plot/color=2/nolab/transpose/over variable2_calc[i=@ave]
+go text_legend_put 10 25 87 " @AS($basefile1)" 1
+go text_legend_put 10 25 83 " @AS($basefile2)" 2
+
+set v 2 
+use "($file2)"
+go margins_set 20 10 10 10
+($method)($qualifiers) variable2_view
+go cont_cylin 0 /over/nolab " " ($polygonfile2)
+go text_put 3 94 "@AS($basefile2): <NL> ($variable2)" -1 0.32
+go text_stat3_put 90 85 variable2_calc 1 0.25 
+
+def view/xlim=0.7,1./ylim=0.3,0.6 5 
+set v 5 
+go margins_set 20 10 10 10
+plot/set_up($qualifiersplot) variable2_calc[i=@ave]
+ppl tics ,($PPL$YLEN),,,1,
+ppl plot
+ppl tics .125,.25,.125,.25,-1,-1
+
+set v 3 
+let variable2_regridded=variable2[g=gridvar1]
+let diff=variable1[d=($basefile1)]-variable2_regridded
+let diff_view=diff($viewlimits)
+let diff_calc=diff($calclimits)
+go margins_set 20 10 10 10
+($method)($qualifiersdiff) diff_view
+go cont_cylin 0 /over/nolab " " ($polygonfilediff)
+go text_put 5 90 "@ASDifference: ($variable1) - ($variable2)" -1 0.35
+go text_stat3_put 90 85 diff_calc 1 0.25
+
+def view/xlim=0.7,1./ylim=0.0,0.3 6
+set v 6 
+go margins_set 20 10 10 10
+plot/set_up($qualifiersplotdiff) diff_calc[i=@ave]
+ppl tics ,($PPL$YLEN),,,1,
+ppl plot
+ppl tics .125,.25,.125,.25,-1,-1
+ppl pen 1,2
+ppl aline,1,0,($YAXIS_MIN),0,($YAXIS_MAX)
+ppl pen 1,1
+
+go logo_put ipsl
+
+go textlayer_new
+go textlayer_text_put 5 95 "@AS($title)" -1 0.5
+

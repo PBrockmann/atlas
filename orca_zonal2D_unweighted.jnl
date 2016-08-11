@@ -1,0 +1,131 @@
+\cancel mode verify
+
+!**************************************************************
+! Description:
+!
+! Usage:
+!
+! Example:
+!
+! Notes:
+!
+! Calls:
+!
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:35 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.5 $
+! History:
+! Modification:
+!
+! Examples:
+!---------------------------------------------------------
+! yes? use "../output_cpl/LJ10_SE_1789_1798_grid_T.nc"
+!
+!---------------------------------------------------------
+! Ex: plot zonal average of a volume variable (3D)
+! yes? go orca_zonal2D_unweighted.jnl 5 votemper[l=1,d=1] shade /HLIM=-90:90/lev=25 
+!
+! yes? go orca_zonal2D_unweighted.jnl 5 votemper[l=1,d=1] shade /HLIM=-90:90/lev=25 none black
+!
+! yes? go orca_zonal2D_unweighted.jnl 5 votemper[l=1,d=1] fill /HLIM=-90:90/lev=25 none black
+!
+!---------------------------------------------------------
+!**************************************************************
+
+def sym ME_zonal_width=$1
+
+let ME_var0=$2
+!def sym ME_var0_dset=`$2,return=DSET`
+!let ME_var1=ME_var0[d=($ME_var0_dset)]
+let ME_var1=ME_var0
+
+def sym ME_CMD=$3
+def sym ME_QUALIFIERS=$4
+def sym ME_zonal_nb=`180/($ME_zonal_width)`
+
+def sym ME_fileresult=$5%none%
+
+! Define background color
+def sym ME_bg=$6%none%
+
+!---------------------------------------------------------
+def sym ME_filenamezonal=ORCA2.0_zonalbands_`($ME_zonal_width),zw=2`.nc
+set data/save
+use ($ME_filenamezonal)
+
+let ME_filename_main="zonal_" 
+let ME_filename_suffix={spawn:" echo $PPID"}
+let ME_filename=ME_filename_main+ME_filename_suffix
+sp rm -f `ME_filename`.nc
+
+let ME_zonal=zonalbands[k=1,gxy=ME_var1,d=($ME_filenamezonal)]
+
+!---------------------------------------------------------
+! Unweighted means arithmetic average : SUM(Xi)/NB(Xi)
+
+! Save each zonal band computations as time (only way to append to a necdf file with ferret)
+repeat/range=1:($ME_zonal_nb)/name=n ( \
+        let/quiet ME_var_select=if ME_zonal eq `n` then ME_var1 ;\
+        let/quiet ME_zon_0=ME_var_select[i=@sum,j=@sum]/ME_var_select[i=@ngd,j=@ngd] ;\
+        let/quiet ME_zon_1=ysequence(ME_zon_0)+l[l=`n`]*0 ;\
+        save/quiet/append/file=`ME_filename`.nc ME_zon_1 ;\
+        cancel var ME_zon_1 )
+
+! Read a zt grid in a tz grid then reshaped to a yz grid
+use/order=tz `ME_filename`.nc
+def axis/units=degrees_north/y=`-90+($ME_zonal_width)/2`:`90-($ME_zonal_width)/2`:($ME_zonal_width) my_axis_y
+def sym ME_var1_shape=`ME_var1,return=shape`
+if ($ME_var1_shape%|XY>TRUE|*>FALSE%) then
+        let ME_varzaxis=1
+else
+        let ME_varzaxis=z[gz=ME_var1]
+endif
+def axis/from_variable/name=my_zaxis/z/depth ME_varzaxis[k=`ME_var1,return=kstart`:`ME_var1,return=kend`]
+def grid/y=my_axis_y/z=my_zaxis my_grid
+let ME_zon_2=y[g=my_grid]*z[g=my_grid]
+let varzonal_`($ME_zonal_width),zw=2`=RESHAPE(ME_zon_1,ME_zon_2)
+set variable/title=$2 varzonal_`($ME_zonal_width),zw=2`
+
+!list varzonal_`($ME_zonal_width),zw=2`
+!show grid varzonal_`($ME_zonal_width),zw=2`
+
+!---------------------------------------------------------
+ppl set ME_CMD1 $edit(ME_CMD,upcase)
+ppl set ME_ISFILL $locate("FILL",ME_CMD1)
+
+if `strcmp("($ME_bg)","none")` then
+    if `($ME_ISFILL) gt 0` then
+        say fill
+        SHADE($ME_QUALIFIERS)/nokey/pal=($ME_bg)/set_up missing(varzonal_`($ME_zonal_width),zw=2`,0) ; go unlabels 1 8 ; ppl shade
+        SHADE($ME_QUALIFIERS)/over/nolab varzonal_`($ME_zonal_width),zw=2`
+        FILL($ME_QUALIFIERS)/over/nolab varzonal_`($ME_zonal_width),zw=2`
+    else
+        say shade
+        SHADE($ME_QUALIFIERS)/nokey/pal=($ME_bg)/set_up missing(varzonal_`($ME_zonal_width),zw=2`,0) ; go unlabels 1 8 ; ppl shade
+        SHADE($ME_QUALIFIERS)/over/nolab varzonal_`($ME_zonal_width),zw=2`
+    endif
+else
+        ($ME_CMD)($ME_QUALIFIERS) varzonal_`($ME_zonal_width),zw=2`
+endif
+
+!---------------------------------------------------------
+if `strcmp("($ME_fileresult)","none")` then
+	save/clobber/file=($ME_fileresult) varzonal_`($ME_zonal_width),zw=2`
+endif
+
+!**************************************************************
+cancel data `ME_filename`.nc
+sp rm -f `ME_filename`.nc 
+cancel data ($ME_filenamezonal)
+
+set data/restore
+
+cancel var varzonal_`($ME_zonal_width),zw=2`
+cancel sym ME_*
+cancel var ME_*
+
+!**************************************************************
+set mode/last verify
+

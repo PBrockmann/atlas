@@ -1,0 +1,38 @@
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:34 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+def axis/z=1:20:1 kcoefs
+def grid/z=kcoefs kgrid
+
+file/var=ap_read/g=kgrid LMDZ_coef_AP.txt
+file/var=bp_read/g=kgrid LMDZ_coef_BP.txt
+
+let ap=ap_read[d=LMDZ_coef_AP.txt]
+let bp=bp_read[d=LMDZ_coef_BP.txt]
+let ap_shifted=missing(ap[k=@shf:1],0)
+let bp_shifted=missing(bp[k=@shf:1],0)
+
+def axis/z=1:19:1 klevels
+let ap_ave_0=(ap+ap_shifted)/2
+let ap_ave_1=ap_ave_0[gz=klevels@asn]
+let bp_ave_0=(bp+bp_shifted)/2
+let bp_ave_1=bp_ave_0[gz=klevels@asn]
+
+let pressure_ground=$1
+let pressure_0=ap_ave_1+pressure_ground*bp_ave_1
+let pressure=pressure_0/100
+
+! Define standard pressure levels 
+!def axis/from_data/z/depth/units="mb"/name=LMDZ_stdpressurelevels {10, 20, 30, 50, 70, 100, 150, 200, 250, 300, 400, 500, 600, 700, 850, 925, 1000}
+use LMDZ_stdpressurelevels.nc
+
+!show axis/z LMDZ_stdpressurelevels

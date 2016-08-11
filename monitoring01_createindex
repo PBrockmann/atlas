@@ -1,0 +1,112 @@
+#!/bin/ksh
+#
+# Author: Patrick Brockmann
+# Contact: Patrick.Brockmann@cea.fr
+# $Date: 2009/05/14 15:09:35 $
+# $Name: ATLAS_608_1_5 $
+# $Revision: 1.1.1.5 $
+# History:
+# Modification:
+#
+
+#---------------------------------------------
+texthtml=""
+card=0
+
+#---------------------------------------------
+while [ $# -ne 0 ]
+do
+        case $1 in
+        -h|--help|-help)
+                echo "----------------------------------------------------------------------------"
+                echo "Usage: monitoring01_createindex [-h] [-d] [-c] [-t 'text'] directory"
+                echo
+                echo "Description: Create an 'index.html' for the given input directory."
+                echo "             Javascript tabs are used to present the different images pregenerated"
+                echo "             (all, global, heminorth, hemisouth, land, ocean) and accessible from"
+                echo "             the 'images' directory of the input directory."
+                echo "             An 'html' directory is added to the input directory to provide"
+                echo "             the javascript features."
+                echo
+                echo "Options:"
+		echo "   -t, --text"
+		echo "       Text set as title. Single quote should be used."
+		echo "       Below a complicated example with !,', html accents and tags"
+		echo "       $ monitoring01_createindex -t 'Bient\&ocirc;t l'\''\&eacute;t\&eacute;...<BR>Encore quelques mois tout de m\&ecirc;me \!' directory"
+		echo
+		echo
+                echo "----------------------------------------------------------------------------"
+                exit ;;
+        -d|--debug)
+                set -x
+                shift ;;
+        -c|--card)
+	        card=1
+		shift ;;
+        -t|--text)
+	        texthtml=$2
+		shift 2 ;;
+        -*)
+                monitoring01_createindex -h
+                exit ;;
+        *)
+                break ;;
+
+        esac
+done
+
+if [ $# -lt 1 ] ; then
+        monitoring01_createindex -h
+        exit
+fi
+
+#---------------------------------------------
+dirin=$1
+
+#---------------------------------------------
+if [ ! -d ${dirin}/images ] ; then
+	echo "monitoring01_createindex error: ${dirin}/images does not exist"
+	exit
+fi
+cd ${dirin}
+
+#---------------------------------------------
+function PRINTHTML {
+for file in `ls images/$@ 2>/dev/null` ; do
+	basefile=`basename $file`
+	printf "<!-- ============== -->\\\\n"
+	printf "<table class=\"image\" name=\"${file}\">\\\\n"
+	printf "<tr><td>\\\\n"
+	printf "<a href='javascript:popimage(\"${file}\")'>\\\\n"
+	printf "<img class=\"tipimg\" alt=\"\" src=\"${file%%.gif}.jpg\" tip=\"${file}\" border=\"0\" /></a>\\\\n"
+	printf "</td></tr>\\\\n"
+	printf "<tr><td align=\"left\">\\\\n"
+	printf "<a href='javascript:popimage(\"${file}\")'>\\\\n"
+	printf "${basefile%%.gif}</a>\\\\n"
+	printf "</td></tr>\\\\n"
+	printf "</table>\\\\n"
+done
+}
+
+#---------------------------------------------
+# Transform the index.html template
+
+if [ $card -eq 1 ] ; then
+	# With card option, monitoring is presented
+        # with thumbnails (Analysis Card, Monitoring Board, About)	
+	template=`whence $0`_card.index.html.template
+else
+	template=`whence $0`.index.html.template
+fi
+
+sed -e "s#XXXXXX#$( echo ${texthtml} )#" \
+    -e "s#AAAAAA#$( PRINTHTML *.gif )#" \
+    -e "s#TTTTTT#$( date +"%F %T" )#" \
+    -e "s#UUUUUU#$( whoami )#" \
+    -e "s#HHHHHH#$( hostname )#" \
+$template > index.html
+
+#---------------------------------------------
+rm -rf html
+cp -Rf `whence $0`.dirhtml html
+

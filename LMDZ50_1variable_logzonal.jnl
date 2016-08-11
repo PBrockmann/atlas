@@ -1,0 +1,43 @@
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@cea.fr
+! $Date: 2009/05/14 15:09:34 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.6 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+def sym file1=($01)
+def sym variable1=($02)
+def sym pressure1=($03)
+def sym qualifiers1=($04%/pal=fast_001/lev=10/title=""%)
+def sym method1=($05%shade%) 
+def sym limitup=($06%1%)
+def sym limitdown=($07%1200%)
+
+!************************************************************
+let variable1=($variable1)
+let pressure1=($pressure1)
+
+!===============================
+go page_new -i 1 1
+
+set v 1
+go margins_set 10 10 10 15
+
+use "($file1)"
+go LMDZ50_logzonal.jnl ($file1) variable1 pressure1 ($qualifiers1) ($method1) ($limitup) ($limitdown) 
+
+!===============================
+go logo_put ipsl
+
+go textlayer_new
+go symbol_basename_and_define basefile1 "($file1)"
+go textlayer_text_put 10 94 "@AS($basefile1)" -1 0.25
+go textlayer_text_put 10 92.5 "@AS($variable1)" -1 0.25

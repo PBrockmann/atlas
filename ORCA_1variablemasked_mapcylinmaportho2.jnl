@@ -1,0 +1,82 @@
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:34 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+def sym file=$1
+def sym model=$2
+def sym variable1=$3
+def sym qualifiers=/nokey/title=""$4% %
+def sym polygonfile=$5%earth_continents%
+
+def sym arg6=$6%none%
+if ($arg6%|none>false|*>true|%) then
+    def sym zoom=$6
+else
+    def sym zoom=/hlim=0:450:30/vlim=-90:90:30
+endif
+
+def sym arg7=$7%none%
+if ($arg7%|none>false|*>true|%) then
+    def sym cmdhgridlines=go hgridlines $7 
+    def sym cmdvgridlines=go vgridlines $7 
+    def sym cmdgridortho2=go cont_ortho_2 0 90 /over 10 graticule_$7 
+else
+    def sym cmdhgridlines=go null_command
+    def sym cmdvgridlines=go null_command
+    def sym cmdgridortho2=go null_command
+endif
+
+!************************************************************
+use "($file)"
+
+let variable1=($variable1)
+def sym ME_klevel=`variable1,return=kstart`
+if `($ME_klevel) eq 0` then 
+	def sym ME_klevel=1
+endif
+let variable1_masked=if mask[k=($ME_klevel),d=($model)_grid.nc] eq 1 then variable1
+
+go symbol_basename_and_define basefile "($file)"
+
+go page_new -i 1 2 0 100 0 90
+
+set v 1
+def sym CM=0 ! central meridien to set accordingly with zoom area
+go map_cylin ($model) ($CM) variable1_masked 20 ($qualifiers)($zoom) ($polygonfile) 
+ppl shaset protect
+go map_cylin ($model) `($CM)+360` variable1_masked 20 /over($qualifiers)($zoom) ($polygonfile)
+ppl shaset protect
+($cmdhgridlines)
+($cmdvgridlines)
+
+set v 2
+go map_ortho_2 ($model) 0 90 variable1_masked 10 ($qualifiers) ($polygonfile)
+($cmdgridortho2)
+
+define view/xlim=0,1/ylim=0.4,0.5 colorbar
+set v colorbar
+go colorbar_put -h 10 90 10 50 0.3 ($qualifiers)
+
+go logo_put ipsl
+
+go textlayer_new
+go textlayer_text_put 5 98 "@AS($basefile)" -1 0.35
+go textlayer_text_put 5 95 "@AS($variable1)" -1 0.35
+
+set data/save
+use "($model)_grid.nc"
+set data/restore
+go textlayer_stat_put 10 90 variable1_masked -1 0.25
+cancel data ($model)_grid.nc
+

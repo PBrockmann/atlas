@@ -1,0 +1,134 @@
+
+!**************************************************************
+! Author: Sebastien Denvil
+! Contact: sebastien.denvil@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:35 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification: En attente de reglement de pb
+!               sur err551_XAXIS_1.jnl
+!
+!**************************************************************
+
+set memory/size=48
+
+!************************************************************
+def sym file=$1
+def sym var=$2
+def sym variable_name=$3
+def sym qualifiers_plot=$4
+def sym deltav=$5%2%
+def sym smoothbox=$6%10%
+def sym qualifiers_shade=$7
+def sym resol=$8
+def sym ok_som=$9
+def sym ok_oce=$10
+
+def sym file_ref=($11%XXXXX%)
+def sym var_ref=($12%XXXXX%)
+
+!************************************************************
+
+def sym minmax_file=minmax_($variable_name).nc
+
+use "ORCA($resol).0_grid.nc"
+
+let my_var=($var)
+if `($ok_som) eq 1` then
+   let var_def=my_var[i=@sum,j=@sum]
+else
+   let var_def=my_var[i=@ave,j=@ave]
+endif
+
+use ($file)
+
+def sym var_lend=`var_def,return=lend`
+def sym file_dset=`var_def,return=dset`
+
+use ($minmax_file)
+
+go symbol_basename_and_define basefile "($file)"
+
+go page_new -i 1 2 0 100 0 90
+
+if `($var_lend) gt 1` then
+
+        set v 1 
+        go margins_set 15 20 10 10
+	plot/set_up/nolab/grat=(dash,color=black)/line=1($qualifiers_plot) var_def[d=($file_dset),l=1:($var_lend)@sbx:($smoothbox)]
+        go unlabels 1 6
+	ppl plot
+	if `($ok_oce) eq 1` then
+		plot/set_up/nolab/over/line=4($qualifiers_plot) VAR_MIN_SELECTED[l=1:($var_lend)@FLN]
+	else
+		plot/set_up/nolab/over/line=4($qualifiers_plot) VAR_MIN_SELECTED[gt=my_var[d=($file_dset)]@ASN,l=1:($var_lend)@FLN]
+	endif
+        go unlabels 1 6
+	ppl plot/over
+	if `($ok_oce) eq 1` then
+                plot/set_up/nolab/over/line=2($qualifiers_plot) VAR_MAX_SELECTED[l=1:($var_lend)@FLN]
+        else
+                plot/set_up/nolab/over/line=2($qualifiers_plot) VAR_MAX_SELECTED[gt=my_var[d=($file_dset)]@ASN,l=1:($var_lend)@FLN]
+        endif
+        go unlabels 1 6
+	ppl plot/over
+        ppl pen 1,1
+        go text_put 5 90 "@ASGlobal average" -1 0.35
+        go text_legend_put 15 25 8 " Annual cycles maximums" 2
+        go text_legend_put 15 25 5 " Original smoothed by ($smoothbox)" 1
+	go text_legend_put 15 25 2 " Annual cycles minimums" 4
+
+        set v 2
+	if ($file_ref%|XXXXX>true|*>false|%) then
+		if `($ok_oce) eq 1` then
+		   def axis/units=degrees_north/from_data/name=my_yaxis/Y lat[d=1,i=50,j=1:148]
+		   let ME_var1_0=my_var
+		   let ME_var1_0_a=ME_var1_0[i=1:180@ave,j=1:149]
+		   let ME_var2=ME_var1_0_a[gy=my_yaxis@asn]
+		else
+		   let ME_var2=my_var[i=@ave]
+		endif
+	else
+		use "($file_ref)" 
+		go symbol_basename_and_define basefile_ref "($file_ref)"
+		let ME_var1_0=my_var
+		let ME_var2_0=($var_ref)
+		if `($ok_oce) eq 1` then
+		   def axis/units=degrees_north/from_data/name=my_yaxis/Y lat[d=1,i=50,j=1:148]
+		   let ME_var1_0_a=ME_var1_0[i=1:180@ave,j=1:149]
+		   let ME_var2_0_a=ME_var2_0[i=1:180@ave,j=1:149]
+		   let ME_var1_0_b=ME_var1_0_a[gy=my_yaxis@asn]
+		   let ME_var2_0_b=ME_var2_0_a[gy=my_yaxis@asn]
+		   let ME_var2=ME_var1_0_b-ME_var2_0_b
+                else
+                   let ME_var2=ME_var1_0[i=@ave]-ME_var2_0[i=@ave]
+                endif
+	endif
+        go margins_set 15 20 10 10
+        shade/set_up/nolab($qualifiers_shade) ME_var2[d=($file_dset)]
+        go unlabels 1 6
+        ppl shade
+	if ($file_ref%|XXXXX>true|*>false|%) then
+		go text_put 5 90 "@ASZonal average" -1 0.35
+	else
+        	go text_put 5 90 "@ASDrift zonal average" -1 0.35
+	endif
+
+        go logo_put ipsl 
+        
+        go textlayer_new
+        go textlayer_text_put 5 98 "@AS($file_dset)" -1 0.35
+        go textlayer_text_put 5 95 "@AS($var)" -1 0.35
+
+else
+        set v full 
+        go viewport_box_put 5
+        go text_put 50 50 "Only one time step"
+        go logo_put ipsl 
+endif
+
+cancel data ($basefile)
+
+cancel var ME_*
+cancel symb ME_*

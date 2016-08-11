@@ -1,0 +1,71 @@
+!**************************************************************
+! Description:
+!
+! Usage:
+!
+! Example:
+!
+! Notes:
+!
+! Calls:
+!
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:35 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.5 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+!================================
+use "../output_cpl/2L27_SE_2030_2039_output/2L27_SE_2030_2039_grid_T.nc"
+
+! Affichage standard 
+! La grandeur comporte des cellules redondantes
+let var=VOTEMPER
+shade var[k=1,l=1,d=1]
+
+message
+
+!================================
+! On utilise le mask Terre/Mer pour filtrer les cellules redondantes
+! La grandeur est prete pour des calculs d'integration ou des calculs de bilan par exemple   
+use "ORCA2.0_grid.nc"
+shade var[k=1,l=1,d=1]*mask[k=1,l=1,d=ORCA2.0_grid.nc]
+
+message
+
+!================================
+! On charge un fichier de basin predefini
+! Ici l'exemple est pris pour le Pacifique
+use "ORCA2.0_Basins.nc"
+let maskbasin = if PACMSK eq 1 then 1
+shade var[k=1,l=1,d=1]*mask[k=1,l=1,d=ORCA2.0_grid.nc]*maskbasin[d=ORCA2.0_Basins.nc]*mask[k=1,l=1,d=ORCA2.0_grid.nc]
+
+message
+
+!================================
+! Moyenne zonnale globale
+! Pas besoin de filtrer les cellules redondantes car le script utilise
+! un fichier de bandes zonnales deja filtrees. 
+go orca_zonal_weighted.jnl 5 var[k=1,l=1,d=1] plot/sym=4/line/VLIM=-90:90:5/HGRAT=(DASH,COLOR=blue)/transpose
+
+message
+
+!================================
+! Suivant le basin pacifique pour k=1
+go orca_zonal_weighted.jnl 5 var[k=1,l=1,d=1]*maskbasin[gxy=var[d=1],d=ORCA2.0_Basins.nc] plot/sym=4/line/VLIM=-90:90:5/HGRAT=(DASH,COLOR=blue)/transpose
+go orca_zonal_unweighted.jnl 5 var[k=1,l=1,d=1]*maskbasin[gxy=var[d=1],d=ORCA2.0_Basins.nc] plot/sym=4/line/VLIM=-90:90:5/HGRAT=(DASH,COLOR=blue)/transpose/over
+
+message
+
+!================================
+! Suivant le basin pacifique pour tous les niveaux k
+go orca_zonal_weighted.jnl 5 var[l=1,d=1]*maskbasin[gxy=var[d=1],d=ORCA2.0_Basins.nc] shade/lev=25/HLIM=-90:90:5/VGRAT=(DASH,COLOR=blue) 
+
+set w 2
+go orca_zonal_unweighted.jnl 5 var[l=1,d=1]*maskbasin[gxy=var[d=1],d=ORCA2.0_Basins.nc] shade/lev=25/HLIM=-90:90:5/VGRAT=(DASH,COLOR=blue) 
+
+message

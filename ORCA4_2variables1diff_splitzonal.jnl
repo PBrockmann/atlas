@@ -1,0 +1,113 @@
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:34 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+def sym title=$1
+def sym file1=$2
+def sym variable1=$3
+def sym file2=$4
+def sym variable2=$5
+def sym qualifiers1=/nolab/nokey/title=""$6% %
+def sym qualifiersdiff=/nolab/nokey/title=""$7% %
+def sym method=$8%fill% 
+
+!*************************
+def sym vlim_split=500 
+def sym vlim_max=5000 
+def sym vlim_top_delta=100 
+def sym vlim_bottom_delta=500 
+
+!************************************************************
+
+use "ORCA4.0_grid.nc"
+def axis/units=degrees_north/from_data/name=my_yaxis/Y lat[i=26,j=1:75]
+cancel data ORCA4.0_grid.nc
+
+go page_new -i 1 6 0 100 0 90
+
+!********************
+use "($file1)"
+go symbol_basename_and_define basefile1 "($file1)"
+let variable1=($variable1)
+let variable1_a=variable1[i=1:89@ave,j=1:75,d=($basefile1)]
+let variable1_b=variable1_a[gy=my_yaxis@asn]
+
+set v 1
+go margins_set 20 0 5 15
+($method)($qualifiers1)/axes=1,0,1,1/vlim=0:($vlim_split):($vlim_top_delta) variable1_b 
+ppl shaset protect
+
+go text_put 5 88 "@AS($basefile1): ($variable1)" -1 0.45
+go text_stat2_put 85 88 variable1_b 1 0.3
+
+set v 2 
+go margins_set 0 20 5 15
+($method)($qualifiers1)/axes=0,1,1,1/vlim=($vlim_split):($vlim_max):($vlim_bottom_delta) variable1_b 
+ppl shaset protect
+
+!********************
+use "($file2)"
+go symbol_basename_and_define basefile2 "($file2)"
+let variable2=($variable2)
+let variable2_a=variable2[i=1:89@ave,j=1:75,d=($basefile2)]
+let variable2_b=variable2_a[gy=my_yaxis@asn]
+
+set v 3 
+go margins_set 20 0 5 15
+($method)($qualifiers1)/axes=1,0,1,1/vlim=0:($vlim_split):($vlim_top_delta) variable2_b
+ppl shaset protect
+
+go text_put 5 88 "@AS($basefile2): ($variable2)" -1 0.45
+go text_stat2_put 85 88 variable2_b 1 0.3
+
+set v 4 
+go margins_set 0 20 5 15
+($method)($qualifiers1)/axes=0,1,1,1/vlim=($vlim_split):($vlim_max):($vlim_bottom_delta) variable2_b
+ppl shaset protect
+
+!********************
+define view/xlim=0.9,1/ylim=0.3,0.9 colorbar
+set v colorbar
+go colorbar_put  10 70 10 90 0.3 ($qualifiers1)
+ppl shaset protect
+
+!********************
+let diff_b=variable1_b-variable2_b
+
+set v 5 
+go margins_set 20 0 5 15
+($method)($qualifiersdiff)/axes=1,0,1,1/vlim=0:($vlim_split):($vlim_top_delta) diff_b
+ppl shaset protect
+
+go text_put 5 88 "@ASDifference: ($variable1) - ($variable2)" -1 0.45
+go text_stat2_put 85 88 diff_b 1 0.3
+
+set v 6 
+go margins_set 0 20 5 15
+($method)($qualifiersdiff)/axes=0,1,1,1/vlim=($vlim_split):($vlim_max):($vlim_bottom_delta) diff_b
+ppl shaset protect
+
+!********************
+define view/xlim=0.9,1/ylim=0.,0.3 colorbardiff
+set v colorbardiff
+go colorbar_put  10 70 10 90 0.3 ($qualifiersdiff)
+ppl shaset protect
+
+!********************
+go logo_put ipsl
+
+!********************
+go textlayer_new
+go textlayer_text_put 5 95 "@AS($title)" -1 0.5
+

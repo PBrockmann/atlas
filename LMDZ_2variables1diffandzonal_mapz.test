@@ -1,0 +1,3 @@
+go LMDZ_2variables1diffandzonal_mapz.jnl "Air temperature at 800mb" /home/brock/prod/2L27_SE_2030_2039_output/L27_SE_2030_2039_histmth.nc (temp[l=4]-273.15) pgb_climatology.nc (tmpprs[l=4]-273.15) 800 /lev=(-INF)(-80,30,5)(INF) /pal=pal_01/lev=(-INF)(-5)(-5,5,1)(INF) /hlim=0:30 /hlim=-5:5
+
+frame/file=LMDZ_2variables1diffandzonal_mapz.gif

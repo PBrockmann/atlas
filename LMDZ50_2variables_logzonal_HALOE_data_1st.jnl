@@ -1,0 +1,129 @@
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@cea.fr
+! $Date: 2009/05/14 15:09:34 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.6 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+def sym file1=($01)
+def sym variable1=($02)
+def sym pressure1=($03)
+def sym qualifiers1=($04%/pal=fast_001/lev=10/title=""%)
+def sym method1=($05%shade%) 
+
+def sym file2=($06)
+def sym variable2=($07)
+def sym qualifiers2=($08%/line=1/nolab/over/lev/title=""%)
+def sym method2=($09%contour%) 
+
+def sym limitup=($10%1%)
+def sym limitdown=($11%1200%)
+
+!************************************************************
+let variable1=($variable1)
+let pressure1=($pressure1)
+
+let variable2=($variable2)
+
+!===============================
+go page_new -i 1 1
+
+set v 1
+go margins_set 10 10 10 15
+
+!===============================
+use "($file2)"
+
+! Prepare HALOE grid 
+def axis/y/units="degrees_north"/name=myy/from_data x[g=variable2]
+def axis/z/units="Pa"/name=myz/from_data/depth log(y[g=variable2])
+def axis/t/units="months"/cal=360_D/name=myt/from_data t[g=variable2]
+let out_grid = y[gy=myy]+z[gz=myz]+t[gt=myt]
+let new_variable2=reshape(variable2,out_grid)
+
+!------------------------
+! Control number of digits in figures in the keybar
+ppl shakey ,,,,4
+
+ppl tics ,,0,0
+ppl axlabp -1,0
+($method1)/set_up/hlim=-90:90/vlim=`log(($limitup))`:`log(($limitdown))`($qualifiers1) new_variable2
+
+go unlabels 1 8
+
+ppl ($method1)
+
+!------------------------
+def sym myvlim_min=($limitup)
+def sym myvlim_max=($limitdown)
+
+ppl window,off
+
+if `($myvlim_min) lt 0.1 and ($myvlim_max) ge 0.1` then
+   repeat/i=1:10:1 ( let myindice=i*1E-2 ; let myindicelog=log(myindice) ; \
+        ppl aline 1,-93,`myindicelog`,-90,`myindicelog` ; \
+        label -95,`myindicelog`,1,0,0.1,"`myindice`" ; \
+        ppl aline 1,90,`myindicelog`,93,`myindicelog` })
+endif
+if `($myvlim_min) lt 1 and ($myvlim_max) ge 1` then
+   repeat/i=1:10:1 ( let myindice=i*1E-1 ; let myindicelog=log(myindice) ; \
+        ppl aline 1,-93,`myindicelog`,-90,`myindicelog` ; \
+        plot/nolab/vs/line/color=1/over {-93,-90},{ `myindicelog`,`myindicelog`} ; \
+        label -95,`myindicelog`,1,0,0.1,"`myindice`" ; \
+        ppl aline 1,90,`myindicelog`,93,`myindicelog` })
+endif
+if `($myvlim_min) lt 10 and ($myvlim_max) ge 10` then
+   repeat/i=1:10:1 ( let myindice=i ; let myindicelog=log(myindice) ; \
+        ppl aline 1,-93,`myindicelog`,-90,`myindicelog` ; \
+        plot/nolab/vs/line/color=1/over {-93,-90},{ `myindicelog`,`myindicelog`} ; \
+        label -95,`myindicelog`,1,0,0.1,"`myindice`" ; \
+        ppl aline 1,90,`myindicelog`,93,`myindicelog` })
+endif
+if `($myvlim_min) lt 100 and ($myvlim_max) ge 100` then
+   repeat/i=1:10:1 ( let myindice=i*1E1 ; let myindicelog=log(myindice) ; \
+        ppl aline 1,-93,`myindicelog`,-90,`myindicelog` ; \
+        plot/nolab/vs/line/color=1/over {-93,-90},{ `myindicelog`,`myindicelog`} ; \
+        label -95,`myindicelog`,1,0,0.1,"`myindice`" ; \
+        ppl aline 1,90,`myindicelog`,93,`myindicelog` })
+endif
+if `($myvlim_min) le 1000 and ($myvlim_max) ge 1000` then
+   repeat/i=1:10:1 ( let myindice=i*1E2 ; let myindicelog=log(myindice) ; \
+        ppl aline 1,-93,`myindicelog`,-90,`myindicelog` ; \
+        plot/nolab/vs/line/color=1/over {-93,-90},{ `myindicelog`,`myindicelog`} ; \
+        label -95,`myindicelog`,1,0,0.1,"`myindice`" ; \
+        ppl aline 1,90,`myindicelog`,93,`myindicelog` })
+endif
+
+label -105,`log(($myvlim_min))+(log(($myvlim_max))-log(($myvlim_min)))/2`,0,90,0.12,"HEIGHT (mb)"
+
+!************************************************************
+! Return to default values
+ppl window,on
+ppl tics .125,.25,.125,.25
+ppl axlabp -1,-1
+
+!===============================
+use "($file1)"
+go LMDZ50_logzonal.jnl ($file1) variable1 pressure1 /nolab($qualifiers2) ($method2) ($limitup) ($limitdown) 
+
+!===============================
+go logo_put ipsl
+
+go textlayer_new
+go symbol_basename_and_define basefile2 "($file2)"
+go textlayer_text_put 10 94 "@AS($basefile2)" -1 0.25
+go textlayer_text_put 10 92.5 "@AS($variable2)" -1 0.25
+
+go symbol_basename_and_define basefile1 "($file1)"
+go textlayer_text_put 01 98 "@ASOverlay :" -1 0.25
+go textlayer_text_put 10 98 "@AS($basefile1)" -1 0.25
+go textlayer_text_put 10 96.5 "@AS($variable1)" -1 0.25
+

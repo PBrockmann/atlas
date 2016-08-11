@@ -1,0 +1,30 @@
+
+def sym file="/dmnfs/p24jegou/EXPER/CH4_FJ07/MM_CH4_FJ07.lmdz.histmth.an2000.m06.nc"
+use ($file)
+
+!========================================================
+set window 1
+
+use ECMWF50_stdpressurelevels.nc
+
+!----------------------
+! Regridding on 50 levels from ECMWF50_stdpressurelevels.nc
+! using ZAXREPLACE(V,ZVALS,ZAX)
+!    Regrid V onto Z axis of ZAX based upon Z values in ZVALS using linear interpolation
+!        V: variable on native Z axis
+!        ZVALS: Z-value field corresponding to data points of V
+!        ZAX: variable with desired Z (depth) axis points
+let new_temp = ZAXREPLACE(temp[d=1],pres[d=1]/100,Z[GZ=ECMWF50_stdpressurelevels])
+
+!----------------------
+set variable/title="Temperature"/units="K" new_temp
+
+shade new_temp[i=@ave,l=1,d=1]
+
+cancel data/all
+
+!========================================================
+set window 2
+
+! The same with a vertical log axis by using the script LMDZ50_logzonal.jnl
+go LMDZ50_logzonal.jnl ($file) temp[l=1] pres[l=1]/100 /lev=20 shade 1 1000

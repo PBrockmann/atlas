@@ -1,0 +1,86 @@
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:35 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+
+def sym file1=$1
+def sym file2=$2
+def sym file3=$3
+def sym station_name=$4
+def sym station_position_lon=$5
+def sym station_position_lat=$6
+def sym station_number=$7
+def sym range=$8%XXXXX%
+
+def sym lon_delta=30
+def sym lat_delta=15
+def sym map_range=/hlim=`($station_position_lon)-($lon_delta)`:`($station_position_lon)+($lon_delta)`/vlim=`($station_position_lat)-($lat_delta)`:`($station_position_lat)+($lat_delta)`
+
+!************************************************************
+
+go page_new -i 1 1 0 100 0 60 
+
+IF ($range%|XXXXX>true|*>false|%) THEN
+   ppl set vl
+ELSE
+   ppl set vl /vlimit=($range)
+ENDIF
+
+! Get climatological axes 
+use climatological_axes
+cancel data climatological_axes
+
+!##################
+define view/xlim=0.,1/ylim=0.6,0.9 map
+set v map
+go margins_set 10 30 10 10	
+go cont_cylin.jnl 0 /line=1/grat=(dash,color=black)($map_range)/nolab
+go land_detail 1 overlay 1 " " blue blue
+go polymark POLYGON/OVER/nolab/fill/pal=black/line=2 ($station_position_lon) ($station_position_lat) 0 circle
+
+!##################
+set v 1  
+go margins_set 10 30 10 10	
+
+!##################
+use "($file1)"
+go symbol_basename_and_define basefile1 "($file1)"
+plot/grat="large(dash,color=black),small(dash,color=black)"/thick=3/color=1/nolab($vl) hydrographs[x=($station_position_lon),y=($station_position_lat),GT=month_reg@ASN]
+cancel data ($basefile1)
+
+!##################
+use "($file2)"
+go symbol_basename_and_define basefile2 "($file2)"
+plot/thick=3/color=2/nolab/over hydrographs[($station_number),GT=month_reg@MOD]
+cancel data ($basefile2)
+
+!##################
+use "($file3)"
+go symbol_basename_and_define basefile3 "($file3)"
+plot/thick=3/color=3/nolab/over hydrographs[x=($station_position_lon),y=($station_position_lat),GT=month_reg@ASN]
+cancel data ($basefile3)
+
+!##################
+go logo_put ipsl
+
+!##################
+go textlayer_new
+go textlayer_text_put 50 95 "($station_name)" 0 0.5
+go textlayer_text_put 50 90 "Location : ($station_position_lon)#E ($station_position_lat)#N" 0 0.5
+
+!##################
+go text_legend_put 15 25 11 " @AS($basefile1)" 13 
+go text_legend_put 15 25 8 " @AS($basefile2)" 14 
+go text_legend_put 15 25 5  " @AS($basefile3)" 15 
+

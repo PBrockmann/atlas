@@ -1,0 +1,28 @@
+!**************************************************************
+! Author: Rachid Benshila
+! Contact: rbipsl@ipsl.jussieu.fr
+! $Date: 2009/05/14 15:09:34 $
+! $Name: ATLAS_608_1_5 $
+! $Revision: 1.1.1.9 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+def sym var1=$1
+def sym var2=$2
+def sym var3=$3
+
+let max1=if ($var1)[t=@max] ne -9999. then ($var1)[t=@max] else 0
+let max2=($var2)[t=@max]
+let max3=($var3)[t=@max]
+let max0=max(max(max1,max2),max3)
+
+let min1=if ($var1)[t=@min] ne -9999. then ($var1)[t=@min] else 0
+let min2=($var2)[t=@min]
+let min3=($var3)[t=@min]
+let min0=min(min(min1,min2),min3)
+
+
+let max=if max0 ne 0 then max0+abs(abs(max0)+abs(min0))/10 else 1
+let min=if min0 ne 0 then min0-abs(abs(max0)+abs(min0))/10 else (-1)
