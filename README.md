@@ -1,9 +1,9 @@
 
-This repository is a collection of useful files (scripts, palette files, configuration files, etc)  to help produce plots to visualize and analyze output from the different components of the Earth System Model (ESM) from Institut Pierre Simon Laplace (IPSL), France. 
+This repository is a collection of useful files (scripts, palette files, configuration files, etc.) to help produce plots to visualize and analyze output from the different components of the Earth System Model (ESM) from Institut Pierre Simon Laplace (IPSL), France. 
 
 Why another repository "atlas" in addition to the "fast" repository (https://github.com/PBrockmann/fast)?
 
-The motivation is to differentiate the low level layer in the "fast" repository from its use in the specific work of setting up standard diagnostics for each of the components of the Coupled Model from IPSL (ESM).
+The motivation is to differentiate the low level layer of the "fast" repository from its use in the specific work of setting up standard diagnostics for each of the components of the Coupled Model from IPSL (ESM).
 
 Different components ot the IPSL-ESM are:
  * the atmospheric model LMDZ. (http://lmdz.lmd.jussieu.fr)
