@@ -1,0 +1,50 @@
+CANCEL DATA/ALL
+PPL SHASET RESET
+
+DEFINE SYMBOL resol     $1
+
+DEFINE SYMBOL QualiFill $2
+DEFINE SYMBOL VarFill   $3
+
+DEFINE SYMBOL QualiPlot $4
+DEFINE SYMBOL VarPlot   $5
+
+GO beau
+
+DEFINE AXIS/T=0.5:240.5/NPOINTS=240/EDGES       mois
+DEFINE AXIS/T=0.5:12.5/MODULO/NPOINTS=12/EDGES  mois_clim
+
+USE SE_grid_T.nc
+USE SE_grid_V.nc
+
+GO orca_grid ($resol)
+
+LET somixhgt_atl = somixhgt * ma[G=OpT@ASN]
+LET somixhgt_dpi = somixhgt * md[G=OpT@ASN]
+
+!go page_new -li 1 1
+
+go page_new -li 1 1 0 100 10 90
+
+set v 1
+go margins_set 10 10 10 10
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+
+FILL/LINE/KEY/($QualiFill) ($VarFill)[L=@AVE,D=2,G=gyz@ASN]
+PLOT/OVER/LINE=8/($QualiPlot) ($VarPlot)[I=@MAX,G=gxyz@ASN,L=@MAX,D=1]
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/TITLE="Meridional stream function (advective), global"/LEV=2.5d psiver_adv_glo[L=@AVE,D=3,G=gyz@ASN]
+!PLOT/OVER/LINE=8/TITLE="MLD max" somixhgt[I=@MAX,G=gxyz@ASN,L=@MAX,D=1]
+!FRAME/FORMAT=gif/FILE=($exper)-msf-glo-($period).gif
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/TITLE="Meridional stream function (advective), Atlantic"/LEV=2.5d psiver_adv_atl[L=@AVE,D=3,G=gyz@ASN]
+!PLOT/OVER/LINE=8/TITLE="MLD max" somixhgt_atl[I=@MAX,G=gxyz@ASN,L=@MAX,D=1]
+!FRAME/FORMAT=gif/FILE=($exper)-msf-atl-($period).gif 
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/TITLE="Meridional stream function (advective), Pacific/Indian"/LEV=2.5d psiver_adv_dpi[L=@AVE,D=3,G=gyz@ASN]
+!PLOT/OVER/LINE=8/TITLE="MLD max" somixhgt_dpi[I=@MAX,G=gxyz@ASN,L=@MAX,D=1]
+!FRAME/FORMAT=gif/FILE=($exper)-msf-dpi-($period).gif 

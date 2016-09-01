@@ -1,0 +1,111 @@
+CANCEL DATA/ALL
+PPL SHASET RESET
+
+DEFINE SYMBOL resol     $1
+
+DEFINE SYMBOL QualiFill $2
+DEFINE SYMBOL VarFill   $3
+
+GO beau
+
+USE SE_grid_T.nc
+USE SE_grid_U.nc
+USE SE_grid_V.nc
+USE SE_grid_W.nc
+
+USE LEVITUS_1m_Temperature_Pot_Ice_nomask.nc
+USE LEVITUS_1m_Salinity_Ice_nomask.nc
+
+GO orca_grid ($resol)
+
+PPL SHASET RESET
+
+LET/QUIET/TITLE="T Glo"/UNIT="Degrees Celcius" votemper_glo = votemper[G=gxyz@ASN]  
+LET/QUIET/TITLE="S Glo"/UNIT="PSU"             vosaline_glo = vosaline[G=gxyz@ASN]  
+LET/QUIET/TITLE="Zonal velocity"/UNIT="m/s"    vozocrtx_glo = vozocrtx[G=gxyzU@ASN] 
+LET/QUIET/TITLE="Merid. velocity"/UNIT="m/s"   vomecrty_glo = vomecrty[G=gxyzV@ASN] 
+LET/QUIET/TITLE="Vertic.velocity"/UNIT="m/s"   vovecrtz_glo = vovecrtz[G=gxyzW@ASN] 
+
+LET m1 = IF tmask[G=OpT@ASN,D=($CFILE),L=1] GE 0.5 THEN 1
+
+LET/QUIET/TITLE="T Glo"/UNIT="Degrees Celcius"             votemper_glo_ma = votemper[G=gxyz@ASN]*m1[G=gxyz@ASN]
+LET/QUIET/TITLE="S Glo"/UNIT="PSU"                         vosaline_glo_ma = vosaline[G=gxyz@ASN]*m1[G=gxyz@ASN]
+
+go page_new -li 1 1 0 100 10 90
+
+set v 1
+go margins_set 10 10 10 10
+
+FILL/LINE/KEY/($QualiFill) ($VarFill) 
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/VLIM=0:400/HLIM=30:380:30/LEV=(6,32,1)/TITLE="($exper), T (annual mean) at equator" votemper_glo[Y=0,L=@AVE,D=1,X=0:420]
+!FRAME/FORMAT=gif/FILE=($exper)-eq-T-($period).gif 
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/VLIM=0:400/HLIM=30:380:30/LEV=(6,32,1)/TITLE="LEVITUS, T (annual mean) at equator" votemper_glo_ma[Y=0,L=@AVE,D=5,X=0:420]
+!FRAME/FORMAT=gif/FILE=LEVITUS-eq-T.gif 
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/VLIM=0:400/HLIM=30:380:30/LEV=(16,34,4)(34,38,0.1)/TITLE="($exper), S (annual mean) at equator" vosaline_glo[Y=0,L=@AVE,D=1,X=0:420]
+!FRAME/FORMAT=gif/FILE=($exper)-eq-S-($period).gif 
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/VLIM=0:400/HLIM=30:380:30/LEV=(16,34,4)(34,38,0.1)/TITLE="LEVITUS, S (annual mean) at equator" vosaline_glo_ma[Y=0,L=@AVE,D=6,X=0:420]
+!FRAME/FORMAT=gif/FILE=LEVITUS-eq-S.gif
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/LEV=0.1d/HLIM=30:380:30/VLIM=0:400/TITLE="($exper), U (annual mean) at equator, m/s" vozocrtx_glo[Y=0,L=@AVE,D=2,X=0:420]
+!FRAME/FORMAT=gif/FILE=($exper)-eq-U-($period).gif 
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/VLIM=0:400/HLIM=30:380:30/TITLE="($exper), W (annual mean) at equator, mm/day" vovecrtz_glo[Y=0,L=@AVE,D=4,X=0:420]*86400
+!FRAME/FORMAT=gif/FILE=($exper)-eq-W-($period).gif 
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/VLIM=0:400/HLIM=-30:30/LEV=(6,32,1)/TITLE="($exper), T (annual mean) at 160E" votemper_glo[X=160,L=@AVE,D=1]
+!FRAME/FORMAT=gif/FILE=($exper)-160E-T-($period).gif 
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/VLIM=0:400/HLIM=-30:30/LEV=(6,32,1)/TITLE="LEVITUS, T (annual mean) at 160E" votemper_glo_ma[X=160,L=@AVE,D=5]
+!FRAME/FORMAT=gif/FILE=LEVITUS-160E-T.gif 
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/VLIM=0:400/HLIM=-30:30/LEV=(34,37,0.2)/TITLE="($exper), S (annual mean) at 160E" vosaline_glo[X=160,L=@AVE,D=1]
+!FRAME/FORMAT=gif/FILE=($exper)-160E-U-($period).gif 
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/VLIM=0:400/HLIM=-30:30/LEV=(6,32,1)/TITLE="LEVITUS, S (annual mean) at 160E" vosaline_glo_ma[X=160,L=@AVE,D=6]
+!FRAME/FORMAT=gif/FILE=LEVITUS-160E-S.gif 
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/LEV=0.1d/VLIM=0:400/HLIM=-30:30/TITLE="($exper), U (annual mean) at 160E" vozocrtx_glo[X=160,L=@AVE,D=2]
+!FRAME/FORMAT=gif/FILE=($exper)-160E-V-($period).gif 
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/VLIM=0:400/HLIM=-30:30/TITLE="($exper), W (annual mean) at 160E, mm/day" vovecrtz_glo[X=250,L=@AVE,D=4]*86400
+!FRAME/FORMAT=gif/FILE=($exper)-160E-W-($period).gif 
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/VLIM=0:400/HLIM=-30:30/LEV=(6,32,1)/TITLE="($exper), T (annual mean) at 110W" votemper_glo[X=250,L=@AVE,D=1]
+!FRAME/FORMAT=gif/FILE=($exper)-110W-T-($period).gif
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/VLIM=0:400/HLIM=-30:30/LEV=(6,32,1)/TITLE="LEVITUS, T (annual mean) at 110W" votemper_glo_ma[X=250,L=@AVE,D=5]
+!FRAME/FORMAT=gif/FILE=LEVITUS-110W-T.gif 
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/VLIM=0:400/HLIM=-30:30/LEV=(32,37,0.2)/TITLE="($exper), S (annual mean) at 110W" vosaline_glo[X=250,L=@AVE,D=1]
+!FRAME/FORMAT=gif/FILE=($exper)-110W-S-($period).gif 
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/VLIM=0:400/HLIM=-30:30/LEV=(32,37,0.2)/TITLE="LEVITUS, S (annual mean) at 110W" vosaline_glo_ma[X=250,L=@AVE,D=6]
+!FRAME/FORMAT=gif/FILE=LEVITUS-110W-S.gif 
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/LEV=0.1d/VLIM=0:400/HLIM=-30:30/TITLE="($exper), U (annual mean) at 110W" vozocrtx_glo[X=250,L=@AVE,D=2]
+!FRAME/FORMAT=gif/FILE=($exper)-110W-U-($period).gif 
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/KEY/VLIM=0:400/HLIM=-30:30/TITLE="($exper), W (annual mean) at 110W, mm/day" vovecrtz_glo[X=250,L=@AVE,D=4]*86400
+!FRAME/FORMAT=gif/FILE=($exper)-110W-W-($period).gif 

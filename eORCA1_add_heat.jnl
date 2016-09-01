@@ -1,0 +1,31 @@
+CANCEL DATA/ALL
+PPL SHASET RESET
+
+DEFINE SYMBOL resol     $1
+
+DEFINE SYMBOL QualiFill $2
+DEFINE SYMBOL VarFill   $3
+
+GO beau
+
+USE "SE_grid_T.nc"
+USE "SE_grid_V.nc"
+
+GO orca_grid ($resol)
+
+!!! Transports de chaleur
+LET v_t_glo = vomecrty[G=OpT@ASN,D=2] * votemper[G=OpT@ASN,D=1] * e1t_[G=OpT@ASN] * m3t[G=OpT@ASN] * mo[G=OpT@ASN] * e3t_[G=OpT@ASN]
+LET v_t_atl = v_t_glo * ma[G=OpT@ASN] * ms[G=OpT@ASN]
+LET v_t_dpi = v_t_glo * md[G=OpT@ASN] * ms[G=OpT@ASN]
+LET v_t_i_glo = v_t_glo[I=@SUM] ; LET v_t_i_atl = v_t_atl[I=@SUM] ; LET v_t_i_dpi = v_t_dpi[I=@SUM]
+
+LET/QUIET/TITLE="Global meridional heat transport"/UNIT="PW"    heat_znl_glo = v_t_i_glo[K=@SUM]*1E-15*rhocp
+LET/QUIET/TITLE="Atlantic meridional heat transport"/UNIT="PW"  heat_znl_atl = v_t_i_atl[K=@SUM]*1E-15*rhocp
+LET/QUIET/TITLE="Ind+Pac meridional heat transport"/UNIT="PW"   heat_znl_dpi = v_t_i_dpi[K=@SUM]*1E-15*rhocp
+
+go page_new -li 1 1 0 100 10 90
+
+set v 1
+go margins_set 10 10 10 10
+
+PLOT/($QualiFill) ($VarFill)

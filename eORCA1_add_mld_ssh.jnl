@@ -1,0 +1,44 @@
+CANCEL DATA/ALL
+PPL SHASET RESET
+
+DEFINE SYMBOL resol     $1
+
+DEFINE SYMBOL QualiFill $2
+DEFINE SYMBOL VarFill   $3
+
+GO beau
+
+USE SE_grid_T.nc
+USE SE_grid_U.nc
+USE SE_grid_V.nc
+USE SE_grid_W.nc
+
+GO orca_grid ($resol)
+
+go page_new -li 1 1 0 100 10 90
+
+set v 1
+go margins_set 10 10 10 10
+
+FILL/LINE/J=1:`jpojm1`/KEY/($QualiFill) ($VarFill)
+GO fland
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/J=1:`jpojm1`/KEY/LEV=10d/TITLE="($exper) barotropic stream function" psihor[L=@AVE,D=1], lon_, lat_
+!GO fland
+!FRAME/FORMAT=gif/FILE=($exper)-bsf-($period).gif
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE/J=1:`jpojm1`/KEY/LEV=(-1.5,1.5,0.1)/TITLE="($exper) Sea surface height" sossheig[L=@AVE,D=1]-sossheig[L=@AVE,I=@AVE,J=@AVE,D=1], lon_, lat_
+!GO fland
+!FRAME/FORMAT=gif/FILE=($exper)-eta-($period).gif
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE//J=1:`jpojm1`/KEY/LEV=(15)(20,100,10)(100,1000,100)(1000,4000,500)/TITLE="Mixed layer depth (turbocline), March" somixhgt[D=1,L=3], lon_, lat_
+!GO fland
+!FRAME/FORMAT=gif/FILE=($exper)-mld-mar-($period).gif
+
+!SET WINDOW/CLEAR ; SET VIEW FULL
+!FILL/LINE//J=1:`jpojm1`/KEY/LEV=(15)(20,100,10)(100,1000,100)(1000,4000,500)/TITLE="Mixed layer depth (turbocline), September" somixhgt[D=1,L=9], lon_, lat_
+!GO fland
+!FRAME/FORMAT=gif/FILE=($exper)-mld-sep-($period).gif

@@ -25,9 +25,9 @@ http://reference.sitepoint.com/javascript/DocumentType
 <!-- ######################################## -->
 <!-- # Author: Patrick Brockmann -->
 <!-- # Contact: Patrick.Brockmann@cea.fr -->
-<!-- # $Date: $ -->
-<!-- # $Name: $ -->
-<!-- # $Revision: $ -->
+<!-- # $Date: 2011/10/11 14:57:58 $ -->
+<!-- # $Name: ATLAS_672_1_1 $ -->
+<!-- # $Revision: 1.1.1.7 $ -->
 <!-- # History: -->
 <!-- # Modification: -->
 <!-- ######################################## -->
@@ -418,7 +418,7 @@ AAAAAA
      <div id="tabs-3">
 	  <p>This monitoring has been produced by UUUUUU<br/>
 	  from HHHHHH at TTTTTT</p>
-	  <p>Tagname: $Name: $<br/>
+	  <p>Tagname: $Name: ATLAS_672_1_1 $<br/>
 	  More informations: <a target="_blank" href="http://wiki.ipsl.jussieu.fr/IGCMG/Outils/WebServices">http://wiki.ipsl.jussieu.fr/IGCMG/Outils/WebServices</a></p>
           Notes:
           <ul>

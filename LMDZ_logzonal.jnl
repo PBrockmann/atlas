@@ -3,9 +3,9 @@
 !**************************************************************
 ! Author: Patrick Brockmann
 ! Contact: Patrick.Brockmann@ipsl.jussieu.fr
-! $Date: 2009/05/14 15:09:34 $
-! $Name: ATLAS_608_1_5 $
-! $Revision: 1.1.1.6 $
+! $Date: 2011/09/12 12:17:46 $
+! $Name: ATLAS_672_1_1 $
+! $Revision: 1.1.1.10 $
 ! History:
 ! Modification:
 !
@@ -64,8 +64,8 @@ endif
 
 !------------------------
 def sym myvariable1_ksize=`myvariable1,return=ksize`
-if `($myvariable1_ksize) eq 39` then
-	! LMDZ 39 levels set to 50 levels from ECMWF
+if `($variable1_ksize) eq 39 or ($variable1_ksize) eq 59 or ($variable1_ksize) eq 79` then
+        ! LMDZ 39 levels or LMDZ 59/79 levels set to 50 levels from ECMWF
 	def sym pressurelevelsfile=ECMWF50_stdpressurelevels.nc
 	use ($pressurelevelsfile)
 	let myvariable1z = ZAXREPLACE(myvariable1,mypressure1,Z[GZ=ECMWF50_LEVELS])

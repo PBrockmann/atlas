@@ -3,9 +3,9 @@
 <!########################################>
 <!# Author: Patrick Brockmann >
 <!# Contact: Patrick.Brockmann@cea.fr >
-<!# $Date: 2009/05/14 15:09:34 $ >
-<!# $Name: ATLAS_608_1_5 $ >
-<!# $Revision: 1.1.1.5 $ >
+<!# $Date: 2011/09/12 12:17:42 $ >
+<!# $Name: ATLAS_672_1_1 $ >
+<!# $Revision: 1.1.1.6 $ >
 <!# History: >
 <!# Modification: >
 <!########################################>
@@ -98,7 +98,7 @@ SSSSSS
 	  <h2>About</h2>
 	  <p>This atlas index has been produced by UUUUUU<br>
 	  from HHHHHH at TTTTTT</p>
-          <p>Tagname: $Name: $<br>
+          <p>Tagname: $Name: ATLAS_672_1_1 $<br>
           More informations: <a target="_blank" href="http://wiki.ipsl.jussieu.fr/IGCMG/ferret/Atlas">http://wiki.ipsl.jussieu.fr/IGCMG/ferret/Atlas</a></p>
           Notes:
           <ul>

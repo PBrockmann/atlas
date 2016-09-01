@@ -1,0 +1,83 @@
+
+!**************************************************************
+! Author: Patrick Brockmann
+! Contact: Patrick.Brockmann@ipsl.jussieu.fr
+! $Date: 2011/09/12 12:17:51 $
+! $Name: ATLAS_672_1_1 $
+! $Revision: 1.1.1.1 $
+! History:
+! Modification:
+!
+!**************************************************************
+
+set memory/size=20
+
+!************************************************************
+def sym title=$1
+def sym file1=$2
+def sym variable1=$3
+def sym file2=$4
+def sym variable2=$5
+def sym qualifiers=/nolab/pal=grads/title=""$6% %
+def sym qualifiersdiff=/nolab/pal=grads/title=""$7% %
+def sym method=($08%shade%)
+def sym lonrange=($09%X=-180:180%)
+
+!************************************************************
+! Both variables are on the same grid
+
+let variable1=($variable1)
+
+let variable2=($variable2)
+
+use "($file1)"
+use "($file2)"
+
+use "ORCA1.0_grid.nc"
+def axis/units="degrees_east"/from_data/name=my_xaxis/X/modulo lon[j=147]
+cancel data ORCA1.0_grid.nc
+
+def axis/t="01-JAN-0000":"30-DEC-0000":30/edges/units="days"/cal="360_days" mytclim
+
+let variable1_a=variable1[j=141:153@ave]
+let variable1_b=variable1_a[gx=my_xaxis@asn,gt=mytclim@asn]
+
+let variable2_a=variable2[j=141:153@ave]
+let variable2_b=variable2_a[gx=my_xaxis@asn,gt=mytclim@asn]
+
+go page_new -i 1 3 0 100 0 90 
+
+set v 1 
+use "($file1)"
+go margins_set 20 20 20 20
+($method)($qualifiers) variable1_b[($lonrange)]
+ppl shaset protect
+
+go symbol_basename_and_define basefile1 "($file1)"
+go text_put 5 90 "@AS($basefile1): ($variable1)" -1 0.35
+go text_stat2_put 50 5 variable1_b 0
+
+set v 2 
+use "($file2)"
+go margins_set 20 20 20 20
+($method)($qualifiers) variable2_b[($lonrange)] 
+ppl shaset protect
+
+go symbol_basename_and_define basefile2 "($file2)"
+go text_put 5 90 "@AS($basefile2): ($variable2)" -1 0.35
+go text_stat2_put 50 5 variable2_b 0
+
+set v 3 
+let diff=variable1_b[d=($basefile1)]-variable2_b[d=($basefile2)]
+go margins_set 20 20 20 20
+($method)($qualifiersdiff) diff[($lonrange)]
+ppl shaset protect
+
+go text_put 5 90 "@ASDifference: ($variable1) - ($variable2)" -1 0.35
+go text_stat2_put 50 5 diff 0 
+
+ppl shaset protect
+go logo_put ipsl
+
+go textlayer_new
+go textlayer_text_put 5 95 "@AS($title)" -1 0.5
