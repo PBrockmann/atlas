@@ -181,7 +181,8 @@ fi
 pathfiletemplate=$2
 # To be compatible with previous version of monitoring01 where $2 was a directory
 if [ -d ${pathfiletemplate} ] ; then
-	pathfiletemplate=${pathfiletemplate}/*_%var.nc
+	# pathfiletemplate=${pathfiletemplate}/*_%var.nc
+	pathfiletemplate=${pathfiletemplate}/*_??_%var.nc	# change to handle varname with '_'
 fi
 PRINT "monitoring01 mesg : pathfilename = ${pathfiletemplate}"
 
