@@ -2,9 +2,6 @@
 !**************************************************************
 ! Author: Patrick Brockmann
 ! Contact: Patrick.Brockmann@ipsl.jussieu.fr
-! $Date: 2011/09/12 12:17:47 $
-! $Name: ATLAS_672_1_1 $
-! $Revision: 1.1.1.1 $
 ! History:
 ! Modification: New version for STOMATE since orchidee_1_9_4 (Martial Mancip)
 !               For old variables in STOMATE for reference file : ponderation with SPACE_NAT.
