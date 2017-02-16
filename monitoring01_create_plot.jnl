@@ -12,7 +12,7 @@ cancel mode logo
 !##################################################################
 ! ($01) = file
 ! ($02) = var
-! ($03) = smoothing box applied to var
+! ($03) = l_transform applied to var
 !##################################################################
 
 !===========================================
@@ -30,7 +30,7 @@ set window/size=0.4 1
 go margins_set 15 15 10 08 
 
 plot/nolab/grat=(dash,color=6)/thick=1/color=2 ($02)
-plot/over/nolab/thick=1/color=1 ($02)[l=@SBX:($03)]
+plot/over/nolab/thick=1/color=1 ($02)[l=($03)]
 
 go text_put 05 95 "@AS`($02),return=dset`.nc" -1 0.3
 go text_put 10 90 "@AS`($02),return=title` (`($02),return=units`)" -1 0.35

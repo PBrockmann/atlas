@@ -168,7 +168,7 @@ fi;
 }
 
 PRINT "monitoring01 mesg : ################################################"
-PRINT "monitoring01 mesg : monitoring01 released the 2010/12/22"
+PRINT "monitoring01 mesg : monitoring01 released the 2017/01/27"
 
 #---------------------------------------------
 cfgfile=$1
@@ -189,17 +189,19 @@ PRINT "monitoring01 mesg : pathfilename = ${pathfiletemplate}"
 #=========================================
 # Analyze file.cfg
 
-eval set -A list_varname         -- $( awk -F'|' '{if ( NF==7 && ! /^#/ ) print $1}' $cfgfile )
-eval set -A list_filespatterns   -- $( awk -F'|' '{if ( NF==7 && ! /^#/ ) print $2}' $cfgfile )
-eval set -A list_filesadditional -- $( awk -F'|' '{if ( NF==7 && ! /^#/ ) print $3}' $cfgfile )
-eval set -A list_varoperations   -- $( awk -F'|' '{if ( NF==7 && ! /^#/ ) print $4}' $cfgfile )
-eval set -A list_vartitle        -- $( awk -F'|' '{if ( NF==7 && ! /^#/ ) print $5}' $cfgfile )
-eval set -A list_varunits        -- $( awk -F'|' '{if ( NF==7 && ! /^#/ ) print $6}' $cfgfile )
-eval set -A list_calcularea      -- $( awk -F'|' '{if ( NF==7 && ! /^#/ ) print $7}' $cfgfile )
+eval set -A list_varname         -- $( awk -F'|' '{if ( NF>=7 && ! /^#/ ) print $1}' $cfgfile )
+eval set -A list_filespatterns   -- $( awk -F'|' '{if ( NF>=7 && ! /^#/ ) print $2}' $cfgfile )
+eval set -A list_filesadditional -- $( awk -F'|' '{if ( NF>=7 && ! /^#/ ) print $3}' $cfgfile )
+eval set -A list_varoperations   -- $( awk -F'|' '{if ( NF>=7 && ! /^#/ ) print $4}' $cfgfile )
+eval set -A list_vartitle        -- $( awk -F'|' '{if ( NF>=7 && ! /^#/ ) print $5}' $cfgfile )
+eval set -A list_varunits        -- $( awk -F'|' '{if ( NF>=7 && ! /^#/ ) print $6}' $cfgfile )
+eval set -A list_calcularea      -- $( awk -F'|' '{if ( NF>=7 && ! /^#/ ) print $7}' $cfgfile )
 
 eval set -A color                -- $( awk '/color= */ {split($0,a,"=") ; print a[2]}' $cfgfile )
 eval set -A smooth               -- $( awk '/smooth= */ {split($0,a,"=") ; print a[2]}' $cfgfile )
 eval set -A script_create_ave    -- $( awk '/script_create_ave= */ {split($0,a,"=") ; print a[2]}' $cfgfile )
+
+eval set -A list_l_transform     -- $( awk -F'|' '{if ( NF==8 && ! /^#/ ) print $8} {if ( NF==7 && ! /^#/ ) print "@SBX:${smooth}"}' $cfgfile )
 
 #=========================================
 if [ ${#list_varname[*]} -eq 0 ] ; then
@@ -398,8 +400,9 @@ while [ $i -lt ${#list_varname[*]} ] ; do
 
 	varfilein=${outputdir}/files/${prefix}_${varname}_ave.nc
 	varfileout=${outputdir}/images/${prefix}_${varname}.gif
-	PRINT "monitoring01 mesg : ferret -batch ${varfileout} -script monitoring01_create_plot.jnl '\"${varfilein}\" \"${varname}\" \"${smooth}\"'" 
-	eval ferret -batch ${varfileout} -script monitoring01_create_plot.jnl \'\"${varfilein}\" \"${varname}\" \"${smooth}\"\' > /dev/null 2>&1
+	l_transform=${list_l_transform[$i]}
+	PRINT "monitoring01 mesg : ferret -batch ${varfileout} -script monitoring01_create_plot.jnl '\"${varfilein}\" \"${varname}\" \"${l_transform}\"'" 
+	eval ferret -batch ${varfileout} -script monitoring01_create_plot.jnl \'\"${varfilein}\" \"${varname}\" \"${l_transform}\"\' > /dev/null 2>&1
 
 	#----------------------------------
 	let i=i+1
