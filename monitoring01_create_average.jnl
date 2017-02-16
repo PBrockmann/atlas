@@ -19,12 +19,12 @@ def sym title=($05)
 def sym units=($06)
 
 !=================================================
-def sym lend2=`var,return=lend`
+def sym lend2=`var[i=1,j=1,k=1],return=lend`
 
 let isexist = {spawn:"if [ -f ($07) ] ; then echo 1; else echo 0; fi"}
 if `isexist` then
 	use "($07)"
-	def sym lend1=`var,return=lend`
+	def sym lend1=`var[i=1,j=1,k=1],return=lend`
 	def sym llimits=/append/l=`($lend1)+1`:($lend2)
 else
 	def sym llimits=/append
