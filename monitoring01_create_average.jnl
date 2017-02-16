@@ -7,7 +7,7 @@
 ! Modification:
 !
 !=================================================
-set memory/size=900
+set memory/size=1500
 
 go ($01)
 
