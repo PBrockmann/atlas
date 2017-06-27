@@ -135,8 +135,9 @@ for file in filesInter[20:24]:		# Only 4 first files for testing
 #=============================================================
 simuNames = [ os.path.basename(simu) for simu in simuListOk ]
 
+titleTag = 'Inter-monitoring: ' + ' vs '.join(simuNames)
 title = 'Inter-monitoring: <ul style="font-size: 16px;">' + ''.join(['<li>' + s for s in simuNames]) + '</ul>'
-cmd = "monitoring01_createindex -t '" + title + "' " + outputDir;
+cmd = "monitoring01_createindex -t '" + title + "' --titleTag '" + titleTag + "' " + outputDir;
 print cmd
 os.system(cmd)
 

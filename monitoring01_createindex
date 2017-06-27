@@ -8,6 +8,7 @@
 
 #---------------------------------------------
 texthtml=""
+titleTag=""
 card=0
 
 #---------------------------------------------
@@ -42,6 +43,9 @@ do
 		shift ;;
         -t|--text)
 	        texthtml=$2
+		shift 2 ;;
+        --titleTag)
+	        titleTag=$2
 		shift 2 ;;
         -*)
                 monitoring01_createindex -h
@@ -96,7 +100,13 @@ else
 	template=`whence $0`.index.html.template
 fi
 
+if [[ -z "${titleTag}" ]] ; then
+	titleTag=${texthtml}
+fi
+
+
 sed -e "s#XXXXXX#$( echo ${texthtml} )#" \
+    -e "s#T1T1T1#$( echo ${titleTag} )#" \
     -e "s#AAAAAA#$( PRINTHTML *.gif )#" \
     -e "s#TTTTTT#$( date +"%F %T" )#" \
     -e "s#UUUUUU#$( whoami )#" \
