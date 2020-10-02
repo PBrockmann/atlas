@@ -57,7 +57,7 @@ polygon/nolab/noaxes/line/fill/pal=orange/over {`varsimu[l=1]`,`varsimu[l=($vars
 plot/vlim=0:1/nolab/axes=(0,1,0,0)/vgrat=(DASH,color=black) t[gt=simutaxis1]*-1E+34
 
 !------------------------------------
-frame/file="($ImageName).tmp"
+frame/format=gif/file="($ImageName).tmp"
 
 spawn convert ($ImageName).tmp -crop -0-200 ($ImageName)
 spawn rm -f ($ImageName).tmp
