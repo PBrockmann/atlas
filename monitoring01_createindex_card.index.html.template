@@ -319,6 +319,13 @@ function poplink2(link) {
         w=window.open(link,this,'width=1400,height=800,scrollbars=no');
         w.document.close();
 }
+function tdslink(link) {
+	url = window.location.href;
+	if (url.includes("fileServer")) {		// fileServer implies on a TDS
+		url = url.replace("fileServer","catalog").replace("index.html",link) + "/catalog.html";
+	}
+	window.open(link, '_blank');
+}
 
 // -->
 </script>
@@ -389,9 +396,9 @@ function poplink2(link) {
 
 <li style="margin: 10px 0;">Directories access
  <ul>
- <li><a href="files" target="_blank"><img alt="" src="html/images/folder.png" border="0" />&nbsp;files</a></li>
- <li><a href="images" target="_blank"><img alt="" src="html/images/folder.png" border="0" />&nbsp;images</a></li>
- <li><a href="progress" target="_blank"><img alt="" src="html/images/folder.png" border="0" />&nbsp;progress</a></li>
+ <li><a href='javascript:tdslink("files")'><img alt="" src="html/images/folder.png" border="0" />&nbsp;files</a></li>
+ <li><a href='javascript:tdslink("images")'><img alt="" src="html/images/folder.png" border="0" />&nbsp;images</a></li>
+ <li><a href='javascript:tdslink("progress")'><img alt="" src="html/images/folder.png" border="0" />&nbsp;progress</a></li>
  </ul>
 </li>
 
